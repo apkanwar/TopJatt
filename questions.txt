@@ -1,0 +1,9 @@
+--Phase 1:
+
+Why use node 19-alpine when there is a 24-alpine on Dockerhub?
+Could you explain what step 3 does?
+Are we creating and setting the admin and password in docker-compose for mongo and mongo express to whatever we want?
+When I go to localhost:8081, it asks for an username and password. I put in admin and password, but that doesn't work. The DB is usable through compass so I know mongo works, just not express.
+
+-- Phase 2:
+
