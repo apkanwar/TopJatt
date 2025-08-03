@@ -1,3 +1,3 @@
-Next JS TypeScript and TailwildCSS Template
+# TopJatt
 
-- Made for starting new projects!
+Built by RezPoint Inc.
