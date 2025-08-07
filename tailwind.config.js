@@ -20,6 +20,9 @@ module.exports = withMT({
   theme: {
     extend: {
       colors: {
+        topOrange: '#FF9966',
+        customBlack: '#252525',
+        midnight: '#1B1C1E',
         navyBlue: '#28334A',
         dashYellow: '#F9DDAF',
         dashWhite: '#EEEDEA',

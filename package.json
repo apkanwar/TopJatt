@@ -14,7 +14,7 @@
     "@emotion/styled": "^11.11.5",
     "@headlessui/react": "^1.7.14",
     "@heroicons/react": "^2.0.18",
-    "@material-tailwind/react": "^2.1.9",
+    "@material-tailwind/react": "^2.1.10",
     "@mui/icons-material": "^5.15.21",
     "@mui/material": "^5.15.21",
     "@next/third-parties": "^15.0.3",
