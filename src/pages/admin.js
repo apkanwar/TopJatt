@@ -1,154 +1,125 @@
+// pages/admin.js
 import { useState } from 'react';
 
-export default function AdminTrades() {
+const moneyPattern  = /^\d+(\.\d{1,2})?$/;
+const sharesPattern = /^\d+(\.\d+)?$/;
+
+export default function AdminAddTrades() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
-  const [loadingSearch, setLoadingSearch] = useState(false);
-  const [selected, setSelected] = useState(null); // { symbol, name, sparkline? }
-  const [buyPrice, setBuyPrice] = useState('');
-  const [sellPrice, setSellPrice] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [cart, setCart] = useState([]); // {symbol,name,buyPrice,sellPrice,shares,boughtAt,soldAt}
   const [message, setMessage] = useState('');
 
   const onSearch = async () => {
     if (!query.trim()) return;
-    setLoadingSearch(true);
-    setSelected(null);
+    setSearching(true);
+    setResults([]);
     setMessage('');
     try {
       const res = await fetch(`/api/search-symbol?query=${encodeURIComponent(query)}`);
       const data = await res.json();
-      setResults(Array.isArray(data) ? data : []);
-    } catch (e) {
-      console.error(e);
+      const items = Array.isArray(data) ? data : [];
+      setResults(items);
+    } catch {
       setMessage('Search failed');
     } finally {
-      setLoadingSearch(false);
+      setSearching(false);
     }
   };
+  const onSearchKey = (e) => { if (e.key === 'Enter') onSearch(); };
 
-  const selectItem = async (item) => {
-    setSelected({ ...item, sparkline: [] });
-    setMessage('');
-    // fetch tiny history and attach to selection
-    try {
-      const res = await fetch(`/api/history?symbol=${encodeURIComponent(item.symbol)}`);
-      const data = await res.json();
-      setSelected(prev => ({ ...prev, sparkline: Array.isArray(data?.closes) ? data.closes : [] }));
-    } catch (e) {
-      // still allow saving even if history fails
-      console.warn('Sparkline fetch failed', e);
-    }
+  const addToCart = (item) => {
+    if (cart.find(c => c.symbol === item.symbol)) return;
+    setCart(prev => [...prev, { ...item, buyPrice:'', sellPrice:'', shares:'', boughtAt:'', soldAt:'' }]);
   };
+  const removeFromCart = (symbol) => setCart(prev => prev.filter(c => c.symbol !== symbol));
+  const updateCart = (symbol, field, value) =>
+    setCart(prev => prev.map(c => c.symbol === symbol ? { ...c, [field]: value } : c));
 
-  const saveTrade = async () => {
-    if (!selected || !buyPrice || !sellPrice) {
-      setMessage('Please select a symbol and enter both prices.');
-      return;
+  const saveAll = async () => {
+    // validate each
+    for (const c of cart) {
+      if (!moneyPattern.test(String(c.buyPrice))) { setMessage(`Invalid buy price for ${c.symbol}`); return; }
+      if (!sharesPattern.test(String(c.shares)) || Number(c.shares) <= 0) { setMessage(`Invalid shares for ${c.symbol}`); return; }
+      const hasSoldDate  = !!c.soldAt;
+      const hasSellPrice = c.sellPrice !== '' && c.sellPrice != null;
+      if (hasSoldDate !== hasSellPrice) { setMessage(`Provide both sold date and sell price for ${c.symbol}, or neither`); return; }
+      if (hasSellPrice && !moneyPattern.test(String(c.sellPrice))) { setMessage(`Invalid sell price for ${c.symbol}`); return; }
     }
-    setSaving(true);
     setMessage('');
-    try {
-      const res = await fetch('/api/trades', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          symbol: selected.symbol,
-          name: selected.name,
-          buyPrice,
-          sellPrice,
-          sparkline: selected.sparkline || [],
-        }),
-      });
-      if (!res.ok) throw new Error('Save failed');
-      setMessage('✅ Trade saved!');
-      setBuyPrice(''); setSellPrice('');
-    } catch (e) {
-      console.error(e);
-      setMessage('Save failed');
-    } finally {
-      setSaving(false);
-    }
+    const payload = cart.map(c => ({
+      symbol: c.symbol,
+      name: c.name,
+      buyPrice: Number(c.buyPrice),
+      sellPrice: c.sellPrice !== '' ? Number(c.sellPrice) : null,
+      shares: Number(c.shares),
+      boughtAt: c.boughtAt || null,
+      soldAt: c.soldAt || null,
+    }));
+    const res = await fetch('/api/trades', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) { setMessage('Save All failed'); return; }
+    setCart([]); setQuery(''); setResults([]);
+    setMessage('✅ Saved!');
   };
 
   return (
-    <div style={{ maxWidth: 800, margin: '2rem auto', padding: '1rem' }}>
-      <h2>Add Trade</h2>
+    <div style={{ maxWidth: 1100, margin: '2rem auto', padding: '1rem' }}>
+      <h2>Add Trades</h2>
+      {message && <div style={{ marginBottom: 10 }}>{message}</div>}
 
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display:'flex', gap:8 }}>
         <input
-          placeholder="Search stock/crypto/futures (e.g. AAPL, BTC-USD, CL=F)"
+          placeholder="Search (AAPL, BTC-USD, CL=F)"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          style={{ flex: 1, padding: 8 }}
+          onChange={(e)=>setQuery(e.target.value)}
+          onKeyDown={onSearchKey}
+          style={{ flex:1, padding:8 }}
         />
-        <button onClick={onSearch} disabled={loadingSearch}>
-          {loadingSearch ? 'Searching...' : 'Search'}
+        <button onClick={onSearch} disabled={searching}>
+          {searching ? 'Searching…' : 'Search'}
         </button>
       </div>
 
-      {/* Results list (limit visible height ≈ 3 rows; scroll for rest) */}
       {results.length > 0 && (
-        <div
-          style={{
-            marginTop: 16,
-            border: '1px solid #eee',
-            borderRadius: 8,
-            maxHeight: 168,           // ~3 items tall (adjust as you like)
-            overflowY: 'auto'
-          }}
-        >
-          {results.map((r) => (
-            <button
-              key={r.symbol}
-              onClick={() => selectItem(r)}
-              style={{
-                width: '100%',
-                textAlign: 'left',
-                padding: '10px 12px',
-                border: 'none',
-                borderBottom: '1px solid #f0f0f0',
-                background: selected?.symbol === r.symbol ? '#f3f4f6' : 'white',
-                cursor: 'pointer'
-              }}
-            >
-              <div style={{ fontWeight: 600 }}>{r.symbol}</div>
-              <div style={{ fontSize: 12, color: '#555' }}>
-                {r.name} {r.type ? `• ${r.type}` : ''} {r.exchange ? `• ${r.exchange}` : ''}
+        <div style={{ marginTop:10, border:'1px solid #eee', borderRadius:8, maxHeight:168, overflowY:'auto' }}>
+          {results
+            .filter(r => r?.symbol && r?.name) // drop empties
+            .map(r => (
+            <div key={r.symbol} style={{ display:'flex', justifyContent:'space-between', padding:'8px 10px', borderBottom:'1px solid #f6f6f6' }}>
+              <div>
+                <div style={{ fontWeight:600 }}>{r.symbol}</div>
+                <div style={{ fontSize:12, color:'#666' }}>{r.name} {r.type ? `• ${r.type}` : ''}</div>
               </div>
-            </button>
+              <button onClick={() => addToCart(r)}>Add</button>
+            </div>
           ))}
         </div>
       )}
 
-      {/* After selection, show buy/sell inputs + save */}
-      {selected && (
-        <div style={{ marginTop: 16, padding: 12, border: '1px solid #eee', borderRadius: 8 }}>
-          <div style={{ marginBottom: 8 }}>
-            <strong>Selected:</strong> {selected.symbol} — {selected.name}
+      {cart.length > 0 && (
+        <>
+          <div style={{ marginTop:10, fontWeight:600 }}>Selected ({cart.length})</div>
+          <div style={{ display:'grid', gap:8 }}>
+            {cart.map(c => (
+              <div key={c.symbol} style={{ display:'grid', gridTemplateColumns:'220px repeat(4,120px) repeat(2,160px) auto', gap:8, alignItems:'center' }}>
+                <div>{c.symbol} — <span style={{ color:'#666' }}>{c.name}</span></div>
+                <input placeholder="Buy" value={c.buyPrice} onChange={e=>updateCart(c.symbol,'buyPrice',e.target.value)} inputMode="decimal" pattern={moneyPattern.source} style={{ padding:6 }} />
+                <input placeholder="Sell (optional)" value={c.sellPrice} onChange={e=>updateCart(c.symbol,'sellPrice',e.target.value)} inputMode="decimal" pattern={moneyPattern.source} style={{ padding:6 }} />
+                <input placeholder="Shares" value={c.shares} onChange={e=>updateCart(c.symbol,'shares',e.target.value)} inputMode="decimal" pattern={sharesPattern.source} style={{ padding:6 }} />
+                <input type="date" value={c.boughtAt} onChange={e=>updateCart(c.symbol,'boughtAt',e.target.value)} style={{ padding:6 }} />
+                <input type="date" value={c.soldAt} onChange={e=>updateCart(c.symbol,'soldAt',e.target.value)} style={{ padding:6 }} />
+                <button onClick={() => removeFromCart(c.symbol)} style={{ color:'crimson' }}>Remove</button>
+              </div>
+            ))}
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <input
-              type="number" step="0.01" placeholder="Buy price"
-              value={buyPrice} onChange={(e) => setBuyPrice(e.target.value)}
-              style={{ padding: 8, width: 160 }}
-            />
-            <input
-              type="number" step="0.01" placeholder="Sell price"
-              value={sellPrice} onChange={(e) => setSellPrice(e.target.value)}
-              style={{ padding: 8, width: 160 }}
-            />
-            <button onClick={saveTrade} disabled={saving}>
-              {saving ? 'Saving...' : 'Save Trade'}
-            </button>
-          </div>
-          <div style={{ marginTop: 8, fontSize: 12, color: '#555' }}>
-            Sparkline points: {selected?.sparkline?.length || 0}
-          </div>
-        </div>
+          <button style={{ marginTop:8 }} onClick={saveAll}>Save All</button>
+        </>
       )}
-
-      {!!message && <div style={{ marginTop: 12 }}>{message}</div>}
     </div>
   );
 }
