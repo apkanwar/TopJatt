@@ -1,7 +1,10 @@
 import { Carousel, IconButton } from "@material-tailwind/react";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 
+const TradingViewWidget = dynamic(() => import("./TradingViewWidget"), { ssr: false });
+// Placeholder slides (used only when no data is passed)
 const slides = [
     {
         image: "/wellandVale/wellandVale.jpeg",
@@ -15,11 +18,47 @@ const slides = [
         description: "This is the description for Trade #2.",
         extra: "Any extra content or buttons here.",
     },
-    // Add more slides as needed
 ];
 
+function fmtDate(d) {
+    if (!d) return "—";
+    const dt = new Date(d);
+    return dt.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+}
+
+function computeProfit(buyPrice, sellPrice, shares) {
+    if (sellPrice == null || !Number.isFinite(Number(sellPrice))) return null;
+    const buy = Number(buyPrice ?? 0);
+    const sell = Number(sellPrice ?? 0);
+    const sh = Number(shares ?? 0);
+    return (sell - buy) * sh;
+}
+
+/**
+ * CarouselWithSideContent
+ * Expects `data` items with fields like:
+ * { image?, symbol, name, buyPrice, sellPrice?, shares, boughtAt?, soldAt?, description? }
+ * If `image` is missing, we use the existing placeholder image.
+ */
 export default function CarouselWithSideContent({ data = slides }) {
     const [activeIndex, setActiveIndex] = useState(0);
+
+    // Normalize incoming data: ensure we always have the properties we render.
+    const items = useMemo(() => {
+        return (data || []).map((t) => ({
+            image: t?.image || "/wellandVale/wellandVale.jpeg", // keep current placeholder image
+            symbol: t?.symbol,
+            name: t?.name || t?.title,
+            buyPrice: t?.buyPrice,
+            sellPrice: t?.sellPrice,
+            shares: t?.shares,
+            boughtAt: t?.boughtAt,
+            soldAt: t?.soldAt,
+            description: t?.description, // optional long text
+            // fallback view title if no symbol
+            fallbackTitle: t?.title || "",
+        }));
+    }, [data]);
 
     return (
         <div className="">
@@ -28,30 +67,18 @@ export default function CarouselWithSideContent({ data = slides }) {
                 activeIndex={activeIndex}
                 onChange={setActiveIndex}
                 navigation={({ setActiveIndex, activeIndex, length }) => (
-                    // <>
-                    //     <div className="absolute bottom-20 left-2/4 z-50 flex -translate-x-2/4 gap-2 bg-white py-2 px-3 rounded-full">
-                    //         {new Array(length).fill("").map((_, i) => (
-                    //             <span key={i} className={`block h-1 cursor-pointer rounded-2xl transition-all content-['']
-                    //             ${activeIndex === i ? "w-8 bg-top-orange" : "w-4 bg-midnight"}`} onClick={() =>
-                    //                     setActiveIndex(i)}
-                    //             />
-                    //         ))}
-                    //     </div>
                     <div className="absolute bottom-8 left-2/4 z-50 flex -translate-x-2/4 gap-3 bg-white py-2 px-4 rounded-full">
                         {new Array(length).fill("").map((_, i) => (
                             <button
                                 key={i}
                                 onClick={() => setActiveIndex(i)}
-                                className={`px-3 py-1 rounded-full font-semibold transition-colors ${activeIndex === i ? 'bg-top-orange text-white' : 'bg-gray-200 text-gray-700 hover:bg-top-orange hover:text-white'
-                                    }`}
+                                className={`px-3 py-1 rounded-full font-semibold transition-colors ${activeIndex === i ? 'bg-top-orange text-white' : 'bg-gray-200 text-gray-700 hover:bg-top-orange hover:text-white'}`}
                             >
                                 {i + 1}
                             </button>
                         ))}
                     </div>
-                    // </>
                 )}
-
                 prevArrow={({ handlePrev }) => (
                     <IconButton variant="text" color="white" size="lg" onClick={handlePrev}
                         className="!absolute bottom-2 left-16 -translate-y-2/4 bg-top-orange">
@@ -71,17 +98,63 @@ export default function CarouselWithSideContent({ data = slides }) {
                     </IconButton>
                 )}
             >
-                {data.map((slide, idx) => (
-                    <div key={idx} className="flex flex-col md:flex-row items-stretch bg-customBlack rounded-3xl shadow-lg overflow-hidden min-h-[700px] h-[700px] p-16 pb-24 border-white border-8 gap-8">
-                        <div className="md:w-1/2 w-full flex-shrink-0 relative h-40 md:h-full">
-                            <Image src={slide.image} alt={slide.title} className="rounded-xl object-cover" fill priority />
+                {items.map((slide, idx) => {
+                    const profit = computeProfit(slide.buyPrice, slide.sellPrice, slide.shares);
+                    const isClosed = slide.soldAt && slide.sellPrice != null;
+                    const title = slide.symbol ? `${slide.symbol} • ${slide.name || ''}` : (slide.name || slide.fallbackTitle || '');
+
+                    return (
+                        <div key={idx} className="flex flex-col md:flex-row items-stretch bg-customBlack rounded-3xl shadow-lg overflow-hidden min-h-[700px] h-[700px] p-16 pb-24 border-white border-8 gap-8">
+                            {/* LEFT: image (keep placeholder if no stock graph available) */}
+                            <div className="md:w-1/2 w-full flex-shrink-0 relative h-40 md:h-full">
+                                {slide.symbol ? (
+                                    <TradingViewWidget
+                                        symbol={slide.symbol}
+                                        boughtAt={slide.boughtAt}
+                                        soldAt={slide.soldAt}
+                                        height={500}
+                                        theme="light"
+                                    />
+                                ) : (
+                                    <Image src={slide.image} alt={title || `Trade ${idx + 1}`} className="rounded-xl object-cover" fill priority />
+                                )}
+                            </div>
+
+                            {/* RIGHT: trade details */}
+                            <div className="md:w-1/2 w-full p-6 flex flex-col justify-center h-full text-white">
+                                <h2 className="text-2xl font-bold mb-4">{title}</h2>
+
+                                {/* Optional long description (if provided) */}
+                                {slide.description && (
+                                    <p className="text-gray-300 mb-6">{slide.description}</p>
+                                )}
+
+                                <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                                    <div className="text-gray-400">Buy Price</div>
+                                    <div className="font-medium">{slide.buyPrice != null ? Number(slide.buyPrice).toFixed(2) : '—'}</div>
+
+                                    <div className="text-gray-400">Sell Price</div>
+                                    <div className="font-medium">{slide.sellPrice != null ? Number(slide.sellPrice).toFixed(2) : '—'}</div>
+
+                                    <div className="text-gray-400">Shares</div>
+                                    <div className="font-medium">{slide.shares != null ? Number(slide.shares) : '—'}</div>
+
+                                    <div className="text-gray-400">Bought</div>
+                                    <div className="font-medium">{fmtDate(slide.boughtAt)}</div>
+
+                                    <div className="text-gray-400">Sold</div>
+                                    <div className="font-medium">{fmtDate(slide.soldAt)}</div>
+
+                                    <div className="text-gray-400">Status</div>
+                                    <div className="font-medium">{isClosed ? 'Closed' : 'Open'}</div>
+
+                                    <div className="text-gray-400">Profit</div>
+                                    <div className="font-bold">{profit == null ? '—' : profit.toFixed(2)}</div>
+                                </div>
+                            </div>
                         </div>
-                        <div className="md:w-1/2 w-full p-6 flex flex-col justify-center h-full">
-                            <h2 className="text-2xl font-bold mb-2 text-white">{slide.title}</h2>
-                            <p className="text-gray-300 mb-4">{slide.description}</p>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </Carousel>
         </div>
     );

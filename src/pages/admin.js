@@ -1,5 +1,4 @@
-// pages/admin.js
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 const moneyPattern  = /^\d+(\.\d{1,2})?$/;
 const sharesPattern = /^\d+(\.\d+)?$/;
@@ -10,23 +9,43 @@ export default function AdminAddTrades() {
   const [searching, setSearching] = useState(false);
   const [cart, setCart] = useState([]); // {symbol,name,buyPrice,sellPrice,shares,boughtAt,soldAt}
   const [message, setMessage] = useState('');
+  const [searchInfo, setSearchInfo] = useState(''); // shows No results / errors
+  const abortRef = useRef(null);
 
   const onSearch = async () => {
-    if (!query.trim()) return;
+    const q = query.trim();
+    if (!q) { setSearchInfo(''); setResults([]); return; }
+
+    // cancel any in-flight search
+    try { abortRef.current?.abort(); } catch {}
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+
     setSearching(true);
     setResults([]);
     setMessage('');
+    setSearchInfo('');
+
     try {
-      const res = await fetch(`/api/search-symbol?query=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/search-symbol?query=${encodeURIComponent(q)}`, { signal: ctrl.signal, cache: 'no-store' });
+      if (!res.ok) {
+        console.error('search-symbol http', res.status);
+        setSearchInfo('Search failed');
+        return;
+      }
       const data = await res.json();
       const items = Array.isArray(data) ? data : [];
       setResults(items);
-    } catch {
-      setMessage('Search failed');
+      setSearchInfo(items.length === 0 ? `No results for "${q}"` : `Found ${items.length}`);
+    } catch (err) {
+      if (err?.name === 'AbortError') return; // ignored
+      console.error('search-symbol error', err);
+      setSearchInfo('Search failed');
     } finally {
       setSearching(false);
     }
   };
+
   const onSearchKey = (e) => { if (e.key === 'Enter') onSearch(); };
 
   const addToCart = (item) => {
@@ -57,14 +76,20 @@ export default function AdminAddTrades() {
       boughtAt: c.boughtAt || null,
       soldAt: c.soldAt || null,
     }));
-    const res = await fetch('/api/trades', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) { setMessage('Save All failed'); return; }
-    setCart([]); setQuery(''); setResults([]);
-    setMessage('✅ Saved!');
+    try {
+      const res = await fetch('/api/trades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) { setMessage('Save All failed'); return; }
+      setCart([]); setQuery(''); setResults([]);
+      setMessage('✅ Saved!');
+      setSearchInfo('');
+    } catch (e) {
+      console.error('save error', e);
+      setMessage('Save All failed');
+    }
   };
 
   return (
@@ -72,9 +97,9 @@ export default function AdminAddTrades() {
       <h2>Add Trades</h2>
       {message && <div style={{ marginBottom: 10 }}>{message}</div>}
 
-      <div style={{ display:'flex', gap:8 }}>
+      <div style={{ display:'flex', gap:8, alignItems:'center' }}>
         <input
-          placeholder="Search (AAPL, BTC-USD, CL=F)"
+          placeholder="Search (AAPL, NASDAQ:AAPL, ES1!, CME_MINI:ES1!, BTCUSDT, BINANCE:BTCUSDT)"
           value={query}
           onChange={(e)=>setQuery(e.target.value)}
           onKeyDown={onSearchKey}
@@ -84,16 +109,18 @@ export default function AdminAddTrades() {
           {searching ? 'Searching…' : 'Search'}
         </button>
       </div>
+      {searchInfo && <div style={{ marginTop:6, color:'#666' }}>{searchInfo}</div>}
 
       {results.length > 0 && (
-        <div style={{ marginTop:10, border:'1px solid #eee', borderRadius:8, maxHeight:168, overflowY:'auto' }}>
+        <div style={{ marginTop:10, border:'1px solid #eee', borderRadius:8, maxHeight:220, overflowY:'auto' }}>
           {results
             .filter(r => r?.symbol && r?.name) // drop empties
+            .slice(0, 20)
             .map(r => (
-            <div key={r.symbol} style={{ display:'flex', justifyContent:'space-between', padding:'8px 10px', borderBottom:'1px solid #f6f6f6' }}>
+            <div key={`${r.symbol}`} style={{ display:'flex', justifyContent:'space-between', padding:'8px 10px', borderBottom:'1px solid #f6f6f6' }}>
               <div>
                 <div style={{ fontWeight:600 }}>{r.symbol}</div>
-                <div style={{ fontSize:12, color:'#666' }}>{r.name} {r.type ? `• ${r.type}` : ''}</div>
+                <div style={{ fontSize:12, color:'#666' }}>{r.name}{r.type ? ` • ${r.type}` : ''}</div>
               </div>
               <button onClick={() => addToCart(r)}>Add</button>
             </div>
