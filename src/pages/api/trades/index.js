@@ -1,4 +1,3 @@
-// pages/api/trades/index.js
 import clientPromise from '../../../lib/mongodb';
 import yahooFinance from 'yahoo-finance2';
 

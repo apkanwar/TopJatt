@@ -1,6 +1,7 @@
+import Link from 'next/link';
 import { useRef, useState } from 'react';
 
-const moneyPattern  = /^\d+(\.\d{1,2})?$/;
+const moneyPattern = /^\d+(\.\d{1,2})?$/;
 const sharesPattern = /^\d+(\.\d+)?$/;
 
 export default function AdminAddTrades() {
@@ -9,6 +10,7 @@ export default function AdminAddTrades() {
   const [searching, setSearching] = useState(false);
   const [cart, setCart] = useState([]); // {symbol,name,buyPrice,sellPrice,shares,boughtAt,soldAt}
   const [message, setMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [searchInfo, setSearchInfo] = useState(''); // shows No results / errors
   const abortRef = useRef(null);
 
@@ -17,13 +19,14 @@ export default function AdminAddTrades() {
     if (!q) { setSearchInfo(''); setResults([]); return; }
 
     // cancel any in-flight search
-    try { abortRef.current?.abort(); } catch {}
+    try { abortRef.current?.abort(); } catch { }
     const ctrl = new AbortController();
     abortRef.current = ctrl;
 
     setSearching(true);
     setResults([]);
     setMessage('');
+    setSuccessMessage('');
     setSearchInfo('');
 
     try {
@@ -50,7 +53,7 @@ export default function AdminAddTrades() {
 
   const addToCart = (item) => {
     if (cart.find(c => c.symbol === item.symbol)) return;
-    setCart(prev => [...prev, { ...item, buyPrice:'', sellPrice:'', shares:'', boughtAt:'', soldAt:'' }]);
+    setCart(prev => [...prev, { ...item, buyPrice: '', sellPrice: '', shares: '', boughtAt: '', soldAt: '' }]);
   };
   const removeFromCart = (symbol) => setCart(prev => prev.filter(c => c.symbol !== symbol));
   const updateCart = (symbol, field, value) =>
@@ -61,12 +64,13 @@ export default function AdminAddTrades() {
     for (const c of cart) {
       if (!moneyPattern.test(String(c.buyPrice))) { setMessage(`Invalid buy price for ${c.symbol}`); return; }
       if (!sharesPattern.test(String(c.shares)) || Number(c.shares) <= 0) { setMessage(`Invalid shares for ${c.symbol}`); return; }
-      const hasSoldDate  = !!c.soldAt;
+      const hasSoldDate = !!c.soldAt;
       const hasSellPrice = c.sellPrice !== '' && c.sellPrice != null;
       if (hasSoldDate !== hasSellPrice) { setMessage(`Provide both sold date and sell price for ${c.symbol}, or neither`); return; }
       if (hasSellPrice && !moneyPattern.test(String(c.sellPrice))) { setMessage(`Invalid sell price for ${c.symbol}`); return; }
     }
     setMessage('');
+    setSuccessMessage('');
     const payload = cart.map(c => ({
       symbol: c.symbol,
       name: c.name,
@@ -84,69 +88,161 @@ export default function AdminAddTrades() {
       });
       if (!res.ok) { setMessage('Save All failed'); return; }
       setCart([]); setQuery(''); setResults([]);
-      setMessage('✅ Saved!');
+      setSuccessMessage('✅\nNew Traded Saved!');
       setSearchInfo('');
     } catch (e) {
       console.error('save error', e);
-      setMessage('Save All failed');
+      setSuccessMessage('Save All failed');
     }
   };
 
   return (
-    <div style={{ maxWidth: 1100, margin: '2rem auto', padding: '1rem' }}>
-      <h2>Add Trades</h2>
-      {message && <div style={{ marginBottom: 10 }}>{message}</div>}
-
-      <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-        <input
-          placeholder="Search (AAPL, NASDAQ:AAPL, ES1!, CME_MINI:ES1!, BTCUSDT, BINANCE:BTCUSDT)"
-          value={query}
-          onChange={(e)=>setQuery(e.target.value)}
-          onKeyDown={onSearchKey}
-          style={{ flex:1, padding:8 }}
-        />
-        <button onClick={onSearch} disabled={searching}>
-          {searching ? 'Searching…' : 'Search'}
-        </button>
+    <div className="mx-auto max-w-7xl px-4 pt-16">
+      <div className='flex justify-between flex-row'>
+        <h2 className="text-4xl font-bold mb-6">Add Trades</h2>
+        <Link href="/admin-trades" className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2">
+          Edit Trades
+        </Link>
       </div>
-      {searchInfo && <div style={{ marginTop:6, color:'#666' }}>{searchInfo}</div>}
-
-      {results.length > 0 && (
-        <div style={{ marginTop:10, border:'1px solid #eee', borderRadius:8, maxHeight:220, overflowY:'auto' }}>
-          {results
-            .filter(r => r?.symbol && r?.name) // drop empties
-            .slice(0, 20)
-            .map(r => (
-            <div key={`${r.symbol}`} style={{ display:'flex', justifyContent:'space-between', padding:'8px 10px', borderBottom:'1px solid #f6f6f6' }}>
-              <div>
-                <div style={{ fontWeight:600 }}>{r.symbol}</div>
-                <div style={{ fontSize:12, color:'#666' }}>{r.name}{r.type ? ` • ${r.type}` : ''}</div>
-              </div>
-              <button onClick={() => addToCart(r)}>Add</button>
-            </div>
-          ))}
+      {message && (
+        <div className="rounded-md font-semibold text-gray-700 px-4 py-2 mb-4 bg-white">
+          {message}
         </div>
       )}
 
-      {cart.length > 0 && (
-        <>
-          <div style={{ marginTop:10, fontWeight:600 }}>Selected ({cart.length})</div>
-          <div style={{ display:'grid', gap:8 }}>
-            {cart.map(c => (
-              <div key={c.symbol} style={{ display:'grid', gridTemplateColumns:'220px repeat(4,120px) repeat(2,160px) auto', gap:8, alignItems:'center' }}>
-                <div>{c.symbol} — <span style={{ color:'#666' }}>{c.name}</span></div>
-                <input placeholder="Buy" value={c.buyPrice} onChange={e=>updateCart(c.symbol,'buyPrice',e.target.value)} inputMode="decimal" pattern={moneyPattern.source} style={{ padding:6 }} />
-                <input placeholder="Sell (optional)" value={c.sellPrice} onChange={e=>updateCart(c.symbol,'sellPrice',e.target.value)} inputMode="decimal" pattern={moneyPattern.source} style={{ padding:6 }} />
-                <input placeholder="Shares" value={c.shares} onChange={e=>updateCart(c.symbol,'shares',e.target.value)} inputMode="decimal" pattern={sharesPattern.source} style={{ padding:6 }} />
-                <input type="date" value={c.boughtAt} onChange={e=>updateCart(c.symbol,'boughtAt',e.target.value)} style={{ padding:6 }} />
-                <input type="date" value={c.soldAt} onChange={e=>updateCart(c.symbol,'soldAt',e.target.value)} style={{ padding:6 }} />
-                <button onClick={() => removeFromCart(c.symbol)} style={{ color:'crimson' }}>Remove</button>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-12 h-[calc(600px)] overflow-hidden">
+        {/* LEFT SIDEBAR: Search + Results */}
+        <aside className="md:col-span-4 lg:col-span-4 h-full">
+          <div className="h-full flex flex-col rounded-2xl border bg-white p-4 shadow-sm">
+            <div className="mb-3 text-sm font-semibold text-gray-700">Search Symbols</div>
+            <div className="flex gap-2">
+              <input
+                placeholder="NYSE, TSX or Crypto"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={onSearchKey}
+                className="w-full rounded-full border px-5 py-2 text-black font-headings"
+              />
+              <button
+                onClick={onSearch}
+                disabled={searching}
+                className={`hidden`}
+              >
+                {searching ? 'Go…' : 'Search'}
+              </button>
+            </div>
+            {searchInfo &&
+              <div className="font-headings mt-8 text-sm text-black text-center font-semibold">
+                {searchInfo}
               </div>
-            ))}
+            }
+
+            {/* Results (fills remaining height) */}
+            {results.length > 0 && (
+              <div className="mt-2 flex-1 overflow-y-auto rounded-lg border border-gray-200">
+                {results
+                  .filter(r => r?.symbol && r?.name)
+                  .slice(0, 20)
+                  .map((r, idx) => (
+                    <div key={`${r.symbol}-${idx}`} className="flex items-center justify-between px-4 py-3 border-b last:border-b-0">
+                      <div className='flex flex-col gap-1'>
+                        <div className="font-bold text-customBlack">{r.symbol}</div>
+                        <div className="font-medium text-gray-700">{r.name}</div>
+                      </div>
+                      <button onClick={() => addToCart(r)} className="rounded-full border bg-dashWhite px-5 py-1.5 text-sm font-semibold border-amber-900 hover:bg-white">
+                        Add
+                      </button>
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
-          <button style={{ marginTop:8 }} onClick={saveAll}>Save All</button>
-        </>
-      )}
+        </aside>
+
+        {/* RIGHT MAIN: Selected Trades */}
+        <main className="md:col-span-8 lg:col-span-8 h-full">
+          <div className="h-full flex flex-col rounded-2xl border bg-white p-4 shadow-sm">
+            <div className="mb-3 flex justify-between">
+              <div className="text-sm font-semibold text-gray-700">Selected ({cart.length})</div>
+              {cart.length > 0 && (
+                <div className="flex">
+                  <button onClick={saveAll} className="rounded-md bg-green-50 px-5 py-2.5 font-semibold text-green-600 shadow hover:bg-green-100 ring-1 ring-inset ring-green-600">
+                    Save All
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {cart.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center">
+                {successMessage ? (
+                  <div className="bg-navyBlue text-white px-8 py-4 whitespace-pre-line rounded-lg font-numbers font-bold text-lg text-center">
+                    {successMessage}
+                  </div>
+                ) : (
+                  <div className="text-gray-500">No Trades Selected Yet.</div>
+                )}
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto space-y-3">
+                {cart.map((c) => (
+                  <div key={c.symbol} className="flex flex-col gap-3 bg-white p-4 rounded-lg shadow-lg border">
+                    <div className="truncate justify-between flex items-center">
+                      <div className='font-headings'>
+                        <span className="font-semibold">{c.symbol}</span>
+                        <span> — {c.name}</span>
+                      </div>
+
+                      <button onClick={() => removeFromCart(c.symbol)} className="justify-self-end rounded-md bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 ring-1 ring-inset ring-red-200 hover:bg-red-100">
+                        Remove
+                      </button>
+                    </div>
+
+                    <div className='flex flex-row gap-3'>
+                      <input
+                        placeholder="Buy"
+                        value={c.buyPrice}
+                        onChange={(e) => updateCart(c.symbol, 'buyPrice', e.target.value)}
+                        inputMode="decimal"
+                        pattern={moneyPattern.source}
+                        className="w-full rounded-md border px-3 py-2"
+                      />
+                      <input
+                        placeholder="Sell (Optional)"
+                        value={c.sellPrice}
+                        onChange={(e) => updateCart(c.symbol, 'sellPrice', e.target.value)}
+                        inputMode="decimal"
+                        pattern={moneyPattern.source}
+                        className="w-full rounded-md border px-3 py-2"
+                      />
+                      <input
+                        placeholder="Shares"
+                        value={c.shares}
+                        onChange={(e) => updateCart(c.symbol, 'shares', e.target.value)}
+                        inputMode="decimal"
+                        pattern={sharesPattern.source}
+                        className="w-full rounded-md border px-3 py-2"
+                      />
+                      <input
+                        type="date"
+                        value={c.boughtAt}
+                        onChange={(e) => updateCart(c.symbol, 'boughtAt', e.target.value)}
+                        className="w-full rounded-md border px-3 py-2"
+                      />
+                      <input
+                        type="date"
+                        value={c.soldAt}
+                        onChange={(e) => updateCart(c.symbol, 'soldAt', e.target.value)}
+                        className="w-full rounded-md border px-3 py-2"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

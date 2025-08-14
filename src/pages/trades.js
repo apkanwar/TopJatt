@@ -5,7 +5,6 @@ import clientPromise from "@/lib/mongodb";
 function serializeTrade(doc) {
   return {
     _id: doc._id?.toString?.() || null,
-    image: doc.image || null,
     symbol: doc.symbol || "",
     name: doc.name || "",
     buyPrice: typeof doc.buyPrice === "number" ? doc.buyPrice : (doc.buyPrice ? Number(doc.buyPrice) : null),
@@ -13,7 +12,6 @@ function serializeTrade(doc) {
     shares: doc.shares == null ? null : Number(doc.shares),
     boughtAt: doc.boughtAt ? new Date(doc.boughtAt).toISOString() : null,
     soldAt: doc.soldAt ? new Date(doc.soldAt).toISOString() : null,
-    description: doc.description || "",
   };
 }
 

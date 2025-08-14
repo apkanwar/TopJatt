@@ -23,7 +23,7 @@ export default function TradingViewWidget({ symbol, boughtAt, soldAt, height = 5
                 document.head.appendChild(s);
             });
 
-        let widget; // keep ref so we can clean up
+        let widget;
 
         const makeWidget = async () => {
             await ensureScript();
@@ -51,7 +51,6 @@ export default function TradingViewWidget({ symbol, boughtAt, soldAt, height = 5
         makeWidget();
 
         return () => {
-            // TradingView handles widget lifecycle; we just nuke container
             if (containerRef.current) containerRef.current.innerHTML = "";
             widget = null;
         };
@@ -59,7 +58,7 @@ export default function TradingViewWidget({ symbol, boughtAt, soldAt, height = 5
 
     return (
         <div className="bg-dashYellow rounded-xl p-2">
-            <div id={`tv_${symbol || "chart"}`} ref={containerRef} style={{ width: "100%", height}} />
+            <div id={`tv_${symbol || "chart"}`} ref={containerRef} style={{ width: "100%", height }} />
         </div>
     );
 }

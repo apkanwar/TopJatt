@@ -1,11 +1,6 @@
 // pages/admin-trades.js
 import { useEffect, useMemo, useState } from "react";
-import {
-    Card, CardHeader, CardBody, CardFooter,
-    Tabs, TabsHeader, Tab,
-    Input, Select, Option,
-    Button, IconButton, Chip, Typography, Tooltip
-} from "@material-tailwind/react";
+import { Card, CardHeader, CardBody, CardFooter, Tabs, TabsHeader, Tab, Input, Select, Option, Button, IconButton, Chip, Typography, Tooltip } from "@material-tailwind/react";
 import { PencilIcon, TrashIcon, ArrowUpIcon, ArrowDownIcon } from "@heroicons/react/24/outline";
 import { Sparklines, SparklinesLine } from "react-sparklines";
 

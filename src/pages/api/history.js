@@ -1,4 +1,3 @@
-// /pages/api/history.js
 import yahooFinance from 'yahoo-finance2';
 
 export default async function handler(req, res) {

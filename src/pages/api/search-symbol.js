@@ -1,7 +1,3 @@
-// src/pages/api/search-symbol.js
-// Symbol search using yahoo-finance2, mapped to TradingView-style symbols for your UI.
-// This avoids TradingView search 403s while keeping symbols compatible with your TV widget.
-
 import yahooFinance from 'yahoo-finance2';
 
 function mapYahooToTvSymbol(q) {
