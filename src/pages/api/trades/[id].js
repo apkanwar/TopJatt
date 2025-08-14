@@ -1,13 +1,5 @@
-import clientPromise from '../../../lib/mongodb';
+import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
-import yahooFinance from 'yahoo-finance2';
-
-async function fetchSparkline(symbol) {
-  const now = new Date();
-  const from = new Date(); from.setDate(now.getDate() - 35);
-  const rows = await yahooFinance.historical(symbol, { period1: from, period2: now, interval: '1d' });
-  return rows.filter(r => r.close != null).slice(-30).map(r => Number(r.close));
-}
 
 export default async function handler(req, res) {
   const { id } = req.query;
@@ -34,14 +26,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'soldAt and sellPrice must be provided together or both omitted' });
     }
 
-    const sparkline = await fetchSparkline(existing.symbol).catch(() => existing.sparkline || []);
-
     const update = {
       buyPrice: Number(buyPrice),
       shares: Number(shares),
       boughtAt: boughtAt ? new Date(boughtAt) : null,
       lastModified: new Date(),
-      sparkline,
     };
     if (hasSoldDate) {
       update.soldAt   = new Date(soldAt);
