@@ -1,59 +1,72 @@
 // src/pages/api/achievements/index.js
-// GET (list) + POST (create)
-// DB: my_app, Collection: achievements
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
+import clientPromise from "@/lib/mongodb";
 
-import clientPromise from '../../../lib/mongodb';
+function parseIntSafe(v, d) {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) && n > 0 ? n : d;
+}
 
 export default async function handler(req, res) {
   try {
     const client = await clientPromise;
-    const db = client.db('my_app');
-    const col = db.collection('achievements');
+    const db = client.db("my_app");
+    const col = db.collection("achievements");
 
-    // --- GET: list achievements (search by title only) ---
-    if (req.method === 'GET') {
-      const page = Math.max(1, Number(req.query.page || 1));
-      const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize || 20)));
-      const q = (req.query.q || '').trim();
-
-      const filter = {};
-      if (q) filter.title = { $regex: q, $options: 'i' };
+    if (req.method === "GET") {
+      const q = (req.query.q || "").toString().trim();
+      const page = parseIntSafe(req.query.page, 1);
+      const pageSize = Math.min(parseIntSafe(req.query.pageSize, 20), 200);
+      const filter = q ? { title: { $regex: q, $options: "i" } } : {};
 
       const total = await col.countDocuments(filter);
-      const items = await col
+      const docs = await col
         .find(filter)
         .sort({ _id: -1 })
         .skip((page - 1) * pageSize)
         .limit(pageSize)
         .toArray();
 
-      return res.status(200).json({ items, total, page, pageSize });
+      return res.status(200).json({
+        total,
+        items: docs.map((d) => ({
+          _id: d._id.toString(),
+          title: d.title || "",
+          description: d.description || "",
+          logo: d.logo || null,
+          createdAt: d.createdAt || null,
+          lastModified: d.lastModified || null,
+        })),
+      });
     }
 
-    // --- POST: create an achievement ---
-    if (req.method === 'POST') {
-      const { title, description = '', logo = null, userId = null } = req.body || {};
-      if (!title || !String(title).trim()) {
-        return res.status(400).json({ error: 'title is required' });
+    if (req.method === "POST") {
+      const session = await getServerSession(req, res, authOptions);
+      if (!session || session.user?.role !== "admin") {
+        return res.status(401).json({ error: "Unauthorized" });
       }
 
+      const { title, description, logo } = req.body || {};
+      if (!title || typeof title !== "string") {
+        return res.status(400).json({ error: "title is required" });
+      }
       const now = new Date();
       const doc = {
-        title: String(title).trim(),
-        description: String(description || '').trim(),
-        logo: logo ? String(logo).trim() : null,
+        title: title.trim(),
+        description: (description || "").trim(),
+        logo: logo || null,
         createdAt: now,
         lastModified: now,
       };
-
       const result = await col.insertOne(doc);
-      return res.status(200).json({ ok: true, id: result.insertedId });
+      return res.status(201).json({ _id: result.insertedId.toString(), ...doc });
     }
 
-    res.setHeader('Allow', ['GET', 'POST']);
-    return res.status(405).json({ error: 'Method Not Allowed' });
+    res.setHeader("Allow", ["GET", "POST"]);
+    return res.status(405).json({ error: "Method Not Allowed" });
   } catch (e) {
-    console.error('GET/POST /api/achievements error', e);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    console.error("/api/achievements error", e);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 }

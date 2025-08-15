@@ -1,4 +1,6 @@
 import clientPromise from '@/lib/mongodb';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 
 export default async function handler(req, res) {
   const client = await clientPromise;
@@ -38,6 +40,10 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
+    const session = await getServerSession(req, res, authOptions);
+    if (!session || session.user?.role !== 'admin') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     const payload = Array.isArray(req.body) ? req.body : [req.body];
     const docs = [];
     for (const t of payload) {

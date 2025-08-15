@@ -1,5 +1,4 @@
 import Link from "next/link";
-import styles from "@/styles/dash.module.css";
 import Image from "next/image";
 
 const Dash = ({ title, image, bgColor, imageWidth, link }) => {

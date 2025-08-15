@@ -1,48 +1,58 @@
 // src/pages/api/achievements/[id].js
-import clientPromise from '../../../lib/mongodb';
-import { ObjectId } from 'mongodb';
+import { ObjectId } from "mongodb";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
+import clientPromise from "@/lib/mongodb";
 
 export default async function handler(req, res) {
-  const { id } = req.query;
-  let _id;
   try {
-    _id = new ObjectId(String(id));
-  } catch {
-    return res.status(400).json({ error: 'invalid id' });
-  }
+    const id = req.query.id;
+    if (!id || !ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "invalid id" });
+    }
 
-  try {
     const client = await clientPromise;
-    const db = client.db('my_app');
-    const col = db.collection('achievements');
+    const db = client.db("my_app");
+    const col = db.collection("achievements");
 
-    if (req.method === 'PUT') {
-      const { title, description, logo } = req.body || {};
-      const $set = { lastModified: new Date() };
-
-      if (typeof title === 'string') $set.title = title.trim();
-      if (typeof description === 'string') $set.description = description.trim();
-      if (logo === null) $set.logo = null; // explicit null
-      if (typeof logo === 'string') $set.logo = logo.trim();
-
-      if (Object.keys($set).length === 1) {
-        return res.status(400).json({ error: 'no fields to update' });
+    if (req.method === "PUT") {
+      const session = await getServerSession(req, res, authOptions);
+      if (!session || session.user?.role !== "admin") {
+        return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const result = await col.updateOne({ _id }, { $set });
-      if (result.matchedCount === 0) return res.status(404).json({ error: 'not found' });
-      return res.status(200).json({ ok: true, modifiedCount: result.modifiedCount });
+      const { title, description, logo } = req.body || {};
+      const update = { $set: { lastModified: new Date() } };
+      if (typeof title === "string") update.$set.title = title.trim();
+      if (typeof description === "string") update.$set.description = description.trim();
+      if (typeof logo !== "undefined") update.$set.logo = logo || null;
+
+      await col.updateOne({ _id: new ObjectId(id) }, update);
+      const doc = await col.findOne({ _id: new ObjectId(id) });
+      return res.status(200).json({
+        _id: doc._id.toString(),
+        title: doc.title || "",
+        description: doc.description || "",
+        logo: doc.logo || null,
+        createdAt: doc.createdAt || null,
+        lastModified: doc.lastModified || null,
+      });
     }
 
-    if (req.method === 'DELETE') {
-      const result = await col.deleteOne({ _id });
-      return res.status(200).json({ ok: true, deletedCount: result.deletedCount || 0 });
+    if (req.method === "DELETE") {
+      const session = await getServerSession(req, res, authOptions);
+      if (!session || session.user?.role !== "admin") {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      await col.deleteOne({ _id: new ObjectId(id) });
+      return res.status(204).end();
     }
 
-    res.setHeader('Allow', ['PUT', 'DELETE']);
-    return res.status(405).json({ error: 'Method Not Allowed' });
+    res.setHeader("Allow", ["PUT", "DELETE"]);
+    return res.status(405).json({ error: "Method Not Allowed" });
   } catch (e) {
-    console.error('PUT/DELETE /api/achievements/[id] error', e);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    console.error("/api/achievements/[id] error", e);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 }

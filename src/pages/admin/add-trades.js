@@ -1,6 +1,7 @@
 import { Search } from '@mui/icons-material';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
+import AdminGuard from '@/components/adminGuard';
 
 const moneyPattern = /^\d+(\.\d{1,2})?$/;
 const sharesPattern = /^\d+(\.\d+)?$/;
@@ -98,161 +99,163 @@ export default function AddTrades() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-16">
-      <div className='flex justify-between flex-row'>
-        <h2 className="text-4xl font-bold mb-6">Add Trades</h2>
-        <Link href="/admin/manage-trades" className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2">
-          Edit Trades
-        </Link>
-      </div>
-      {message && (
-        <div className="rounded-md font-semibold text-gray-700 px-4 py-2 mb-4 bg-white">
-          {message}
+    <AdminGuard>
+      <div className="mx-auto max-w-7xl px-4 pt-16">
+        <div className='flex justify-between flex-row'>
+          <h2 className="text-4xl font-bold mb-6">Add Trades</h2>
+          <Link href="/admin/manage-trades" className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2">
+            Edit Trades
+          </Link>
         </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-12 h-[calc(600px)] overflow-hidden">
-        {/* LEFT SIDEBAR: Search + Results */}
-        <aside className="md:col-span-4 lg:col-span-4 h-full">
-          <div className="h-full flex flex-col rounded-2xl border bg-white p-4 shadow-sm">
-            <div className="mb-3 text-sm font-semibold text-gray-700">Search Symbols</div>
-            <div className="relative w-full">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                <Search className="h-5 w-5" />
-              </span>
-              <input
-                placeholder="NYSE, TSX or Crypto"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={onSearchKey}
-                className="w-full rounded-full border pl-10 pr-5 py-2 text-black font-headings focus:outline-none focus:ring-2 focus:ring-top-orange"
-              />
-            </div>
-            {searchInfo &&
-              <div className="font-headings mt-8 text-sm text-black text-center font-semibold">
-                {searchInfo}
-              </div>
-            }
-
-            {/* Results (fills remaining height) */}
-            {results.length > 0 && (
-              <div className="mt-2 flex-1 overflow-y-auto rounded-lg border border-gray-200">
-                {results
-                  .filter(r => r?.symbol && r?.name)
-                  .slice(0, 20)
-                  .map((r, idx) => (
-                    <div key={`${r.symbol}-${idx}`} className="flex items-center justify-between px-4 py-3 border-b last:border-b-0">
-                      <div className='flex flex-col gap-1'>
-                        <div className="font-bold text-customBlack">{r.symbol}</div>
-                        <div className="font-medium text-gray-700">{r.name}</div>
-                      </div>
-                      <button onClick={() => addToCart(r)} className="rounded-full border bg-dashWhite px-5 py-1.5 text-sm font-semibold border-amber-900 hover:bg-white">
-                        Add
-                      </button>
-                    </div>
-                  ))}
-              </div>
-            )}
+        {message && (
+          <div className="rounded-md font-semibold text-gray-700 px-4 py-2 mb-4 bg-white">
+            {message}
           </div>
-        </aside>
+        )}
 
-        {/* RIGHT MAIN: Selected Trades */}
-        <main className="md:col-span-8 lg:col-span-8 h-full">
-          <div className="h-full flex flex-col rounded-2xl border bg-white p-4 shadow-sm">
-            <div className="mb-3 flex justify-between">
-              <div className="text-sm font-semibold text-gray-700">Selected ({cart.length})</div>
-              {cart.length > 0 && (
-                <div className="flex">
-                  <button onClick={saveAll} className="rounded-md bg-green-50 px-5 py-2.5 font-semibold text-green-600 shadow hover:bg-green-100 ring-1 ring-inset ring-green-600">
-                    Save All
-                  </button>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-12 h-[calc(600px)] overflow-hidden">
+          {/* LEFT SIDEBAR: Search + Results */}
+          <aside className="md:col-span-4 lg:col-span-4 h-full">
+            <div className="h-full flex flex-col rounded-2xl border bg-white p-4 shadow-sm">
+              <div className="mb-3 text-sm font-semibold text-gray-700">Search Symbols</div>
+              <div className="relative w-full">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                  <Search className="h-5 w-5" />
+                </span>
+                <input
+                  placeholder="NYSE, TSX or Crypto"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={onSearchKey}
+                  className="w-full rounded-full border pl-10 pr-5 py-2 text-black font-headings focus:outline-none focus:ring-2 focus:ring-top-orange"
+                />
+              </div>
+              {searchInfo &&
+                <div className="font-headings mt-8 text-sm text-black text-center font-semibold">
+                  {searchInfo}
+                </div>
+              }
+
+              {/* Results (fills remaining height) */}
+              {results.length > 0 && (
+                <div className="mt-2 flex-1 overflow-y-auto rounded-lg border border-gray-200">
+                  {results
+                    .filter(r => r?.symbol && r?.name)
+                    .slice(0, 20)
+                    .map((r, idx) => (
+                      <div key={`${r.symbol}-${idx}`} className="flex items-center justify-between px-4 py-3 border-b last:border-b-0">
+                        <div className='flex flex-col gap-1'>
+                          <div className="font-bold text-customBlack">{r.symbol}</div>
+                          <div className="font-medium text-gray-700">{r.name}</div>
+                        </div>
+                        <button onClick={() => addToCart(r)} className="rounded-full border bg-dashWhite px-5 py-1.5 text-sm font-semibold border-amber-900 hover:bg-white">
+                          Add
+                        </button>
+                      </div>
+                    ))}
                 </div>
               )}
             </div>
+          </aside>
 
-            {cart.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center">
-                {successMessage ? (
-                  <div className="bg-navyBlue text-white px-8 py-4 whitespace-pre-line rounded-lg font-numbers font-bold text-lg text-center">
-                    {successMessage}
+          {/* RIGHT MAIN: Selected Trades */}
+          <main className="md:col-span-8 lg:col-span-8 h-full">
+            <div className="h-full flex flex-col rounded-2xl border bg-white p-4 shadow-sm">
+              <div className="mb-3 flex justify-between">
+                <div className="text-sm font-semibold text-gray-700">Selected ({cart.length})</div>
+                {cart.length > 0 && (
+                  <div className="flex">
+                    <button onClick={saveAll} className="rounded-md bg-green-50 px-5 py-2.5 font-semibold text-green-600 shadow hover:bg-green-100 ring-1 ring-inset ring-green-600">
+                      Save All
+                    </button>
                   </div>
-                ) : (
-                  <div className="text-gray-500">No Trades Selected Yet.</div>
                 )}
               </div>
-            ) : (
-              <div className="flex-1 overflow-y-auto space-y-3">
-                {cart.map((c) => (
-                  <div key={c.symbol} className="flex flex-col gap-3 bg-white p-4 rounded-lg shadow-lg border">
-                    <div className="truncate justify-between flex items-center">
-                      <div className='font-headings'>
-                        <span className="font-semibold">{c.symbol}</span>
-                        <span> — {c.name}</span>
+
+              {cart.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center">
+                  {successMessage ? (
+                    <div className="bg-navyBlue text-white px-8 py-4 whitespace-pre-line rounded-lg font-numbers font-bold text-lg text-center">
+                      {successMessage}
+                    </div>
+                  ) : (
+                    <div className="text-gray-500">No Trades Selected Yet.</div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto space-y-3">
+                  {cart.map((c) => (
+                    <div key={c.symbol} className="flex flex-col gap-3 bg-white p-4 rounded-lg shadow-lg border">
+                      <div className="truncate justify-between flex items-center">
+                        <div className='font-headings'>
+                          <span className="font-semibold">{c.symbol}</span>
+                          <span> — {c.name}</span>
+                        </div>
+
+                        <button onClick={() => removeFromCart(c.symbol)} className="justify-self-end rounded-md bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 ring-1 ring-inset ring-red-200 hover:bg-red-100">
+                          Remove
+                        </button>
                       </div>
 
-                      <button onClick={() => removeFromCart(c.symbol)} className="justify-self-end rounded-md bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 ring-1 ring-inset ring-red-200 hover:bg-red-100">
-                        Remove
-                      </button>
-                    </div>
+                      <div className="flex flex-row gap-3">
+                        {/* Buy Price */}
+                        <div className="relative w-full">
+                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                          <input
+                            placeholder="Buy"
+                            value={c.buyPrice}
+                            onChange={(e) => updateCart(c.symbol, 'buyPrice', e.target.value)}
+                            inputMode="decimal"
+                            pattern={moneyPattern.source}
+                            className="w-full rounded-md border pl-7 pr-3 py-2"
+                          />
+                        </div>
 
-                    <div className="flex flex-row gap-3">
-                      {/* Buy Price */}
-                      <div className="relative w-full">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                        {/* Sell Price */}
+                        <div className="relative w-full">
+                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                          <input
+                            placeholder="Sell"
+                            value={c.sellPrice}
+                            onChange={(e) => updateCart(c.symbol, 'sellPrice', e.target.value)}
+                            inputMode="decimal"
+                            pattern={moneyPattern.source}
+                            className="w-full rounded-md border pl-7 pr-3 py-2"
+                          />
+                        </div>
+
+                        {/* Shares */}
                         <input
-                          placeholder="Buy"
-                          value={c.buyPrice}
-                          onChange={(e) => updateCart(c.symbol, 'buyPrice', e.target.value)}
+                          placeholder="Shares"
+                          value={c.shares}
+                          onChange={(e) => updateCart(c.symbol, 'shares', e.target.value)}
                           inputMode="decimal"
-                          pattern={moneyPattern.source}
-                          className="w-full rounded-md border pl-7 pr-3 py-2"
+                          pattern={sharesPattern.source}
+                          className="w-full rounded-md border px-3 py-2"
+                        />
+
+                        {/* Dates */}
+                        <input
+                          type="date"
+                          value={c.boughtAt}
+                          onChange={(e) => updateCart(c.symbol, 'boughtAt', e.target.value)}
+                          className="w-full rounded-md border px-3 py-2"
+                        />
+                        <input
+                          type="date"
+                          value={c.soldAt}
+                          onChange={(e) => updateCart(c.symbol, 'soldAt', e.target.value)}
+                          className="w-full rounded-md border px-3 py-2"
                         />
                       </div>
-
-                      {/* Sell Price */}
-                      <div className="relative w-full">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
-                        <input
-                          placeholder="Sell"
-                          value={c.sellPrice}
-                          onChange={(e) => updateCart(c.symbol, 'sellPrice', e.target.value)}
-                          inputMode="decimal"
-                          pattern={moneyPattern.source}
-                          className="w-full rounded-md border pl-7 pr-3 py-2"
-                        />
-                      </div>
-
-                      {/* Shares */}
-                      <input
-                        placeholder="Shares"
-                        value={c.shares}
-                        onChange={(e) => updateCart(c.symbol, 'shares', e.target.value)}
-                        inputMode="decimal"
-                        pattern={sharesPattern.source}
-                        className="w-full rounded-md border px-3 py-2"
-                      />
-
-                      {/* Dates */}
-                      <input
-                        type="date"
-                        value={c.boughtAt}
-                        onChange={(e) => updateCart(c.symbol, 'boughtAt', e.target.value)}
-                        className="w-full rounded-md border px-3 py-2"
-                      />
-                      <input
-                        type="date"
-                        value={c.soldAt}
-                        onChange={(e) => updateCart(c.symbol, 'soldAt', e.target.value)}
-                        className="w-full rounded-md border px-3 py-2"
-                      />
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </main>
+                  ))}
+                </div>
+              )}
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </AdminGuard>
   );
 }

@@ -1,7 +1,8 @@
 import '@/styles/globals.css'
+import { SessionProvider } from 'next-auth/react'
 import { DefaultSeo } from 'next-seo'
 
-export default function App({ Component, pageProps }) {
+export default function App({ Component, pageProps: { session, ...pageProps } }) {
   return (
     <main>
       <DefaultSeo
@@ -11,8 +12,9 @@ export default function App({ Component, pageProps }) {
           siteName: 'TopJatt'
         }}
       />
-      
-      <Component {...pageProps} />
+      <SessionProvider session={session}>
+        <Component {...pageProps} />
+      </SessionProvider>
     </main>
   )
 }

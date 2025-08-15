@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { ClearAllOutlined, Refresh, Search } from '@mui/icons-material';
+import AdminGuard from '@/components/adminGuard';
 
 const fmtImg = (logo) => (logo ? logo : '');
 
@@ -109,6 +110,7 @@ export default function ManageAchievements() {
     };
 
     return (
+        <AdminGuard>
         <div className="mx-auto max-w-7xl px-4 pt-16">
             {/* Header */}
             <div className="flex gap-2 flex-col pb-8">
@@ -285,5 +287,6 @@ export default function ManageAchievements() {
                 </div>
             )}
         </div>
+        </AdminGuard>
     );
 }

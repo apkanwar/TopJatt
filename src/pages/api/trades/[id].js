@@ -1,9 +1,16 @@
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 
 export default async function handler(req, res) {
   const { id } = req.query;
   if (!id || !ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid id' });
+
+  const session = await getServerSession(req, res, authOptions);
+  if (!session || session.user?.role !== 'admin') {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   const client = await clientPromise;
   const db = client.db('my_app');

@@ -1,3 +1,5 @@
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
@@ -5,6 +7,12 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') {
         res.setHeader('Allow', ['POST']);
         return res.status(405).json({ error: 'Method Not Allowed' });
+    }
+
+    // Check authentication and role
+    const session = await getServerSession(req, res, authOptions);
+    if (!session || session.user?.role !== 'admin') {
+        return res.status(401).json({ error: 'Unauthorized' });
     }
 
     try {
