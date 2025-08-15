@@ -1,10 +1,11 @@
+import { Search } from '@mui/icons-material';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 
 const moneyPattern = /^\d+(\.\d{1,2})?$/;
 const sharesPattern = /^\d+(\.\d+)?$/;
 
-export default function AdminAddTrades() {
+export default function AddTrades() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -100,7 +101,7 @@ export default function AdminAddTrades() {
     <div className="mx-auto max-w-7xl px-4 pt-16">
       <div className='flex justify-between flex-row'>
         <h2 className="text-4xl font-bold mb-6">Add Trades</h2>
-        <Link href="/admin-trades" className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2">
+        <Link href="/admin/manage-trades" className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2">
           Edit Trades
         </Link>
       </div>
@@ -115,21 +116,17 @@ export default function AdminAddTrades() {
         <aside className="md:col-span-4 lg:col-span-4 h-full">
           <div className="h-full flex flex-col rounded-2xl border bg-white p-4 shadow-sm">
             <div className="mb-3 text-sm font-semibold text-gray-700">Search Symbols</div>
-            <div className="flex gap-2">
+            <div className="relative w-full">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                <Search className="h-5 w-5" />
+              </span>
               <input
                 placeholder="NYSE, TSX or Crypto"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={onSearchKey}
-                className="w-full rounded-full border px-5 py-2 text-black font-headings"
+                className="w-full rounded-full border pl-10 pr-5 py-2 text-black font-headings focus:outline-none focus:ring-2 focus:ring-top-orange"
               />
-              <button
-                onClick={onSearch}
-                disabled={searching}
-                className={`hidden`}
-              >
-                {searching ? 'Go…' : 'Search'}
-              </button>
             </div>
             {searchInfo &&
               <div className="font-headings mt-8 text-sm text-black text-center font-semibold">
@@ -198,23 +195,34 @@ export default function AdminAddTrades() {
                       </button>
                     </div>
 
-                    <div className='flex flex-row gap-3'>
-                      <input
-                        placeholder="Buy"
-                        value={c.buyPrice}
-                        onChange={(e) => updateCart(c.symbol, 'buyPrice', e.target.value)}
-                        inputMode="decimal"
-                        pattern={moneyPattern.source}
-                        className="w-full rounded-md border px-3 py-2"
-                      />
-                      <input
-                        placeholder="Sell (Optional)"
-                        value={c.sellPrice}
-                        onChange={(e) => updateCart(c.symbol, 'sellPrice', e.target.value)}
-                        inputMode="decimal"
-                        pattern={moneyPattern.source}
-                        className="w-full rounded-md border px-3 py-2"
-                      />
+                    <div className="flex flex-row gap-3">
+                      {/* Buy Price */}
+                      <div className="relative w-full">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                        <input
+                          placeholder="Buy"
+                          value={c.buyPrice}
+                          onChange={(e) => updateCart(c.symbol, 'buyPrice', e.target.value)}
+                          inputMode="decimal"
+                          pattern={moneyPattern.source}
+                          className="w-full rounded-md border pl-7 pr-3 py-2"
+                        />
+                      </div>
+
+                      {/* Sell Price */}
+                      <div className="relative w-full">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                        <input
+                          placeholder="Sell"
+                          value={c.sellPrice}
+                          onChange={(e) => updateCart(c.symbol, 'sellPrice', e.target.value)}
+                          inputMode="decimal"
+                          pattern={moneyPattern.source}
+                          className="w-full rounded-md border pl-7 pr-3 py-2"
+                        />
+                      </div>
+
+                      {/* Shares */}
                       <input
                         placeholder="Shares"
                         value={c.shares}
@@ -223,6 +231,8 @@ export default function AdminAddTrades() {
                         pattern={sharesPattern.source}
                         className="w-full rounded-md border px-3 py-2"
                       />
+
+                      {/* Dates */}
                       <input
                         type="date"
                         value={c.boughtAt}

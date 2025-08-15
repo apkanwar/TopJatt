@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { PencilIcon, TrashIcon, ArrowUpIcon, ArrowDownIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { ClearAllOutlined, RefreshOutlined } from "@mui/icons-material";
+import { ClearAllOutlined, RefreshOutlined, Search } from "@mui/icons-material";
 
 const moneyPattern = /^\d+(\.\d{1,2})?$/;
 const sharesPattern = /^\d+(\.\d+)?$/;
@@ -20,7 +20,7 @@ const fmtMoney = (v) => {
 };
 
 
-export default function AdminTradesMT() {
+export default function ManageTrades() {
     // table state
     const [rows, setRows] = useState([]);
     const [total, setTotal] = useState(0);
@@ -200,7 +200,7 @@ export default function AdminTradesMT() {
                     <h2 className="text-4xl font-bold">Manage Trades</h2>
                     <p className="text-customBlack">Manage existing trades (edit or delete). Use the filters to narrow results.</p>
                 </div>
-                <Link href="/admin" className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2">
+                <Link href="/admin/add-trades" className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2">
                     Add Trades
                 </Link>
             </div>
@@ -226,18 +226,19 @@ export default function AdminTradesMT() {
                     </div>
 
                     {/* Search */}
-                    <div className="w-full sm:w-64">
+                    <div className="relative w-full sm:w-64">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                            <Search className="h-5 w-5" />
+                        </span>
                         <input
                             type="text"
                             placeholder="Search by name or symbol"
                             value={nameQ}
                             onChange={(e) => setNameQ(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter') load(1); }}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-top-orange focus:border-top-orange"
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 pl-10 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-top-orange focus:border-top-orange"
                         />
                     </div>
-
-                    <button onClick={() => load(1)} className="hidden">View all</button>
                     <button onClick={resetAll} className="rounded-md border border-red-300 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"><ClearAllOutlined className="h-5 w-5" /></button>
                 </div>
 
@@ -290,14 +291,32 @@ export default function AdminTradesMT() {
                                             {/* Buy */}
                                             <td className="p-3 md:p-4">
                                                 {isEditing ? (
-                                                    <input name="buyPrice" value={form.buyPrice} onChange={onEdit} className="w-24 md:w-28 rounded-md border border-gray-300 px-2 py-1 text-gray-900 focus:outline-none focus:ring-2 focus:ring-top-orange" />
+                                                    <div className="relative w-24 md:w-28">
+                                                        <span className="absolute inset-y-0 left-0 flex items-center pl-2 text-gray-500">$</span>
+                                                        <input
+                                                            name="buyPrice"
+                                                            value={form.buyPrice}
+                                                            onChange={onEdit}
+                                                            inputMode="decimal"
+                                                            className="w-full rounded-md border border-gray-300 pl-6 pr-2 py-1 text-gray-900 focus:outline-none focus:ring-2 focus:ring-top-orange"
+                                                        />
+                                                    </div>
                                                 ) : fmtMoney(r.buyPrice)}
                                             </td>
 
                                             {/* Sell (hidden on xs) */}
                                             <td className="p-3 md:p-4 hidden sm:table-cell">
                                                 {isEditing ? (
-                                                    <input name="sellPrice" value={form.sellPrice} onChange={onEdit} className="w-24 md:w-28 rounded-md border border-gray-300 px-2 py-1 text-gray-900 focus:outline-none focus:ring-2 focus:ring-top-orange" />
+                                                    <div className="relative w-24 md:w-28">
+                                                        <span className="absolute inset-y-0 left-0 flex items-center pl-2 text-gray-500">$</span>
+                                                        <input
+                                                            name="sellPrice"
+                                                            value={form.sellPrice}
+                                                            onChange={onEdit}
+                                                            inputMode="decimal"
+                                                            className="w-full rounded-md border border-gray-300 pl-6 pr-2 py-1 text-gray-900 focus:outline-none focus:ring-2 focus:ring-top-orange"
+                                                        />
+                                                    </div>
                                                 ) : fmtMoney(r.sellPrice)}
                                             </td>
 

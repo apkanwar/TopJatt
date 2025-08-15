@@ -4,21 +4,6 @@ import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 
 const TradingViewWidget = dynamic(() => import("./TradingViewWidget"), { ssr: false });
-// Placeholder slides (used only when no data is passed)
-const slides = [
-    {
-        image: "/wellandVale/wellandVale.jpeg",
-        title: "Trade #1",
-        description: "This is the description for Trade #1.",
-        extra: "Any extra content or buttons here.",
-    },
-    {
-        image: "/wellandVale/wellandValeConcept.jpeg",
-        title: "Trade #2",
-        description: "This is the description for Trade #2.",
-        extra: "Any extra content or buttons here.",
-    },
-];
 
 function fmtDate(d) {
     if (!d) return "—";
@@ -46,7 +31,7 @@ export default function CarouselWithSideContent({ data = slides }) {
     // Normalize incoming data: ensure we always have the properties we render.
     const items = useMemo(() => {
         return (data || []).map((t) => ({
-            image: t?.image || "/wellandVale/wellandVale.jpeg", // keep current placeholder image
+            image: t?.image || null,
             symbol: t?.symbol,
             name: t?.name || t?.title,
             buyPrice: t?.buyPrice,
@@ -54,9 +39,6 @@ export default function CarouselWithSideContent({ data = slides }) {
             shares: t?.shares,
             boughtAt: t?.boughtAt,
             soldAt: t?.soldAt,
-            description: t?.description, // optional long text
-            // fallback view title if no symbol
-            fallbackTitle: t?.title || "",
         }));
     }, [data]);
 
@@ -66,6 +48,7 @@ export default function CarouselWithSideContent({ data = slides }) {
                 className='rounded-xl'
                 activeIndex={activeIndex}
                 onChange={setActiveIndex}
+                loop
                 navigation={({ setActiveIndex, activeIndex, length }) => (
                     <div className="absolute bottom-8 left-2/4 z-50 flex -translate-x-2/4 gap-3 bg-white py-2 px-4 rounded-full">
                         {new Array(length).fill("").map((_, i) => (
