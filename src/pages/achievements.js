@@ -1,7 +1,7 @@
 // src/pages/achievements.js
 import AchievementsList from "@/components/acheivementsList";
 import Dash from "@/components/dash";
-import clientPromise from "@/lib/mongodb";
+import { getDb } from "@/lib/mongodb";
 
 export default function Achievements({ items = [] }) {
   return (
@@ -26,9 +26,7 @@ export async function getServerSideProps() {
       console.warn("MONGODB_URI is not set; returning empty achievements.");
       return { props: { items: [] } };
     }
-
-    const client = await clientPromise;
-    const db = client.db("my_app");
+    const db = await getDb("my_app");
 
     const docs = await db
       .collection("achievements")
