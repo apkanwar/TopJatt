@@ -1,4 +1,4 @@
-import { Search } from '@mui/icons-material';
+import { ArrowBack, BackHand, Home, Search } from '@mui/icons-material';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 import AdminGuard from '@/components/adminGuard';
@@ -102,6 +102,9 @@ export default function AddTrades() {
     <AdminGuard>
       <div className="mx-auto max-w-7xl px-4 pt-16">
         <div className='flex justify-between flex-row'>
+          <Link href={'/admin/console'} className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2 leading-none flex items-center gap-1">
+            <ArrowBack /> Console
+          </Link>
           <h2 className="text-4xl font-bold mb-6">Add Trades</h2>
           <Link href="/admin/manage-trades" className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2">
             Edit Trades

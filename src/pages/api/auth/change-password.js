@@ -1,5 +1,3 @@
-
-
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './[...nextauth]';
 import clientPromise from '@/lib/mongodb';

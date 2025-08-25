@@ -1,9 +1,9 @@
 import AdminGuard from '@/components/adminGuard';
 import Dash from '@/components/dash';
-import { Logout } from '@mui/icons-material';
+import { Home, Logout } from '@mui/icons-material';
 import { signOut } from 'next-auth/react';
+import Link from 'next/link';
 import { useState } from 'react';
-import bcrypt from 'bcryptjs'; // (not used client-side; remove if bundler complains)
 
 export default function AdminConsole() {
     const [showPwdModal, setShowPwdModal] = useState(false);
@@ -101,6 +101,9 @@ export default function AdminConsole() {
             <div className="mx-auto max-w-5xl px-4 mt-24">
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between">
+                    <Link href={'/'} className="rounded-lg bg-dashWhite px-4 py-2 text-sm font-semibold text-customBlack hover:opacity-90 items-center flex gap-2 leading-none">
+                        <Home /> Home
+                    </Link>
                     <div className="flex gap-2 flex-col">
                         <h2 className="text-4xl font-bold">Welcome to the Admin Console</h2>
                     </div>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { PencilIcon, TrashIcon, ArrowUpIcon, ArrowDownIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { ClearAllOutlined, RefreshOutlined, Search } from "@mui/icons-material";
+import { ArrowBack, ClearAllOutlined, RefreshOutlined, Search } from "@mui/icons-material";
 import AdminGuard from "@/components/adminGuard";
 
 const moneyPattern = /^\d+(\.\d{1,2})?$/;
@@ -198,9 +198,14 @@ export default function ManageTrades() {
             <div className="mx-auto max-w-7xl h-[750px] flex flex-col pt-16">
                 {/* Title and Description */}
                 <div className='flex justify-between flex-row items-center mb-6'>
-                    <div className="flex gap-2 flex-col">
-                        <h2 className="text-4xl font-bold">Manage Trades</h2>
-                        <p className="text-customBlack">Manage existing trades (edit or delete). Use the filters to narrow results.</p>
+                    <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
+                        <Link href={'/admin/console'} className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2 leading-none flex items-center gap-1">
+                            <ArrowBack /> Console
+                        </Link>
+                        <div className="flex gap-2 flex-col">
+                            <h2 className="text-4xl font-bold">Manage Trades</h2>
+                            <p className="text-customBlack">Manage existing trades (edit or delete). Use the filters to narrow results.</p>
+                        </div>
                     </div>
                     <Link href="/admin/add-trades" className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2">
                         Add Trades

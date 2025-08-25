@@ -22,6 +22,7 @@
     "@vercel/speed-insights": "^1.2.0",
     "altcha": "^2.0.4",
     "autoprefixer": "10.4.14",
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "eslint": "8.41.0",
     "eslint-config-next": "^14.2.4",

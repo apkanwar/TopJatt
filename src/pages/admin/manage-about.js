@@ -1,5 +1,6 @@
 import AdminGuard from '@/components/adminGuard';
-import { Check, Restore } from '@mui/icons-material';
+import { ArrowBack, Check, Restore } from '@mui/icons-material';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 export default function ManageAbout() {
@@ -60,7 +61,10 @@ export default function ManageAbout() {
         <AdminGuard>
             <div className="mx-auto max-w-5xl px-4 pt-16">
                 {/* Header */}
-                <div className="mb-6 flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 pb-6">
+                    <Link href={'/admin/console'} className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2 leading-none flex items-center gap-1">
+                        <ArrowBack /> Console
+                    </Link>
                     <div className="flex gap-2 flex-col">
                         <h2 className="text-4xl font-bold">Manage About</h2>
                         <p className="text-customBlack">Update the About Page text shown publicly.</p>
