@@ -5,6 +5,8 @@ on:
     branches: [ "mongo+docker" ]
   pull_request:
     branches: [ "mongo+docker" ]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 permissions:
   contents: read
