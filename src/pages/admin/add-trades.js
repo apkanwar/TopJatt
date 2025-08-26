@@ -101,14 +101,49 @@ export default function AddTrades() {
   return (
     <AdminGuard>
       <div className="mx-auto max-w-7xl px-4 pt-16">
-        <div className='flex justify-between flex-row'>
-          <Link href={'/admin/console'} className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2 leading-none flex items-center gap-1">
-            <ArrowBack /> Console
-          </Link>
-          <h2 className="text-4xl font-bold mb-6">Add Trades</h2>
-          <Link href="/admin/manage-trades" className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2">
-            Edit Trades
-          </Link>
+        {/* Header */}
+        <div className="mb-6">
+          {/* Mobile layout: actions row + centered title */}
+          <div className="sm:hidden space-y-3">
+            <div className="flex items-center justify-between">
+              <Link
+                href="/admin/console"
+                className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-9 py-2 leading-none inline-flex items-center gap-1"
+              >
+                <ArrowBack fontSize="small" /> Console
+              </Link>
+              <Link
+                href="/admin/manage-trades"
+                className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-9 py-2 leading-none inline-flex items-center gap-1"
+              >
+                Edit Trades
+              </Link>
+            </div>
+            <h2 className="text-2xl font-bold text-center pt-4">Add Trades</h2>
+          </div>
+        
+          {/* Tablet/Desktop layout: three-column header */}
+          <div className="hidden sm:grid grid-cols-4 items-center">
+            <div className="justify-self-start">
+              <Link
+                href="/admin/console"
+                className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2 leading-none inline-flex items-center gap-1"
+              >
+                <ArrowBack /> Console
+              </Link>
+            </div>
+            <div className="justify-self-center col-span-2">
+              <h2 className="text-3xl md:text-4xl font-bold text-center">Add Trades</h2>
+            </div>
+            <div className="justify-self-end">
+              <Link
+                href="/admin/manage-trades"
+                className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2 leading-none inline-flex items-center gap-1"
+              >
+                Edit Trades
+              </Link>
+            </div>
+          </div>
         </div>
         {message && (
           <div className="rounded-md font-semibold text-gray-700 px-4 py-2 mb-4 bg-white">

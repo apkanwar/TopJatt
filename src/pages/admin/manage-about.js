@@ -61,7 +61,26 @@ export default function ManageAbout() {
         <AdminGuard>
             <div className="mx-auto max-w-5xl px-4 pt-16">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 pb-6">
+                <div className="mb-6">
+                  {/* Mobile layout: actions row + centered title */}
+                  <div className="sm:hidden space-y-3">
+                    <div className="flex items-center justify-center">
+                      <Link
+                        href="/admin/console"
+                        className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-9 py-2 leading-none inline-flex items-center gap-1"
+                      >
+                        <ArrowBack fontSize="small" /> Console
+                      </Link>
+                      <span className="inline-block" />
+                    </div>
+                    <div className="space-y-1">
+                      <h2 className="text-2xl font-bold text-center">Manage About</h2>
+                      <p className="text-customBlack text-center">Update the About Page text shown publicly.</p>
+                    </div>
+                  </div>
+                
+                  {/* Tablet/Desktop layout: three-column header */}
+                  <div className="hidden sm:flex flex-col md:flex-row md:items-center gap-4 md:gap-8 pb-6">
                     <Link href={'/admin/console'} className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2 leading-none flex items-center gap-1">
                         <ArrowBack /> Console
                     </Link>
@@ -69,6 +88,7 @@ export default function ManageAbout() {
                         <h2 className="text-4xl font-bold">Manage About</h2>
                         <p className="text-customBlack">Update the About Page text shown publicly.</p>
                     </div>
+                </div>
                 </div>
 
                 {/* Body Card */}

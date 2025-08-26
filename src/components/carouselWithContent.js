@@ -1,6 +1,6 @@
 import { Carousel, IconButton } from "@material-tailwind/react";
 import Image from "next/image";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 
 const TradingViewWidget = dynamic(() => import("./TradingViewWidget"), { ssr: false });
@@ -27,6 +27,18 @@ function computeProfit(buyPrice, sellPrice, shares) {
  */
 export default function CarouselWithSideContent({ data = slides }) {
     const [activeIndex, setActiveIndex] = useState(0);
+    const [viewport, setViewport] = useState("desktop"); // "mobile" | "tablet" | "desktop"
+
+    useEffect(() => {
+        const check = () => {
+            if (window.innerWidth < 768) setViewport("mobile");
+            else if (window.innerWidth < 1024) setViewport("tablet");
+            else setViewport("desktop");
+        };
+        check();
+        window.addEventListener("resize", check);
+        return () => window.removeEventListener("resize", check);
+    }, []);
 
     // Normalize incoming data: ensure we always have the properties we render.
     const items = useMemo(() => {
@@ -43,14 +55,14 @@ export default function CarouselWithSideContent({ data = slides }) {
     }, [data]);
 
     return (
-        <div className="">
+        <div className="mx-4">
             <Carousel
                 className='rounded-xl'
                 activeIndex={activeIndex}
                 onChange={setActiveIndex}
                 loop
                 navigation={({ setActiveIndex, activeIndex, length }) => (
-                    <div className="absolute bottom-8 left-2/4 z-50 flex -translate-x-2/4 gap-3 bg-white py-2 px-4 rounded-full">
+                    <div className="hidden md:flex absolute bottom-8 md:bottom-14 lg:bottom-8 left-2/4 z-50 -translate-x-2/4 gap-3 bg-white py-2 px-4 rounded-full">
                         {new Array(length).fill("").map((_, i) => (
                             <button
                                 key={i}
@@ -64,7 +76,7 @@ export default function CarouselWithSideContent({ data = slides }) {
                 )}
                 prevArrow={({ handlePrev }) => (
                     <IconButton variant="text" color="white" size="lg" onClick={handlePrev}
-                        className="!absolute bottom-2 left-16 -translate-y-2/4 bg-top-orange">
+                        className="flex !absolute bottom-2 md:bottom-8 lg:bottom-2 md:left-16 left-8 -translate-y-2/4 bg-top-orange">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2}
                             stroke="currentColor" className="h-6 w-6">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -73,7 +85,7 @@ export default function CarouselWithSideContent({ data = slides }) {
                 )}
                 nextArrow={({ handleNext }) => (
                     <IconButton variant="text" color="white" size="lg" onClick={handleNext}
-                        className="!absolute bottom-2 !right-16 -translate-y-2/4 bg-top-orange">
+                        className="flex !absolute bottom-2 md:bottom-8 lg:bottom-2 right-8 md:!right-16 -translate-y-2/4 bg-top-orange">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2}
                             stroke="currentColor" className="h-6 w-6">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -87,15 +99,21 @@ export default function CarouselWithSideContent({ data = slides }) {
                     const title = slide.symbol ? `${slide.symbol} • ${slide.name || ''}` : (slide.name || slide.fallbackTitle || '');
 
                     return (
-                        <div key={idx} className="flex flex-col md:flex-row items-stretch bg-customBlack rounded-3xl shadow-lg overflow-hidden min-h-[700px] h-[700px] p-16 pb-24 border-white border-8 gap-8">
+                        <div key={idx} className="flex flex-col md:flex-row items-stretch bg-customBlack rounded-3xl shadow-lg overflow-hidden min-h-[520px] h-auto p-4 md:p-16 md:pb-24 border-white border-8 gap-6 md:gap-8">
                             {/* LEFT: image (keep placeholder if no stock graph available) */}
-                            <div className="md:w-1/2 w-full flex-shrink-0 relative h-40 md:h-full">
+                            <div className="w-full md:w-1/2 flex-shrink-0 relative h-56 md:h-64 lg:h-full">
                                 {slide.symbol ? (
                                     <TradingViewWidget
                                         symbol={slide.symbol}
                                         boughtAt={slide.boughtAt}
                                         soldAt={slide.soldAt}
-                                        height={500}
+                                        height={
+                                            viewport === "mobile"
+                                                ? 260
+                                                : viewport === "tablet"
+                                                    ? 325
+                                                    : 500
+                                        }
                                         theme="light"
                                     />
                                 ) : (
@@ -104,15 +122,15 @@ export default function CarouselWithSideContent({ data = slides }) {
                             </div>
 
                             {/* RIGHT: trade details */}
-                            <div className="md:w-1/2 w-full p-6 flex flex-col justify-center h-full text-white">
-                                <h2 className="text-2xl font-bold mb-4">{title}</h2>
+                            <div className="w-full md:w-1/2 p-4 pt-16 pb-20 md:p-6 flex flex-col justify-center h-full text-white">
+                                <h2 className="text-xl md:text-2xl font-bold mb-4 text-left">{title}</h2>
 
                                 {/* Optional long description (if provided) */}
                                 {slide.description && (
-                                    <p className="text-gray-300 mb-6">{slide.description}</p>
+                                    <p className="text-gray-300 mb-6 text-left">{slide.description}</p>
                                 )}
 
-                                <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                                <div className="grid grid-cols-2 gap-x-4 md:gap-x-6 gap-y-2 md:gap-y-3 text-sm">
                                     <div className="text-gray-400">Buy Price</div>
                                     <div className="font-medium">{slide.buyPrice != null ? Number(slide.buyPrice).toFixed(2) : '—'}</div>
 

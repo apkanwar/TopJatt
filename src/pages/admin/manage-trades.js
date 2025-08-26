@@ -195,21 +195,60 @@ export default function ManageTrades() {
 
     return (
         <AdminGuard>
-            <div className="mx-auto max-w-7xl h-[750px] flex flex-col pt-16">
-                {/* Title and Description */}
-                <div className='flex justify-between flex-row items-center mb-6'>
-                    <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
-                        <Link href={'/admin/console'} className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2 leading-none flex items-center gap-1">
-                            <ArrowBack /> Console
-                        </Link>
-                        <div className="flex gap-2 flex-col">
-                            <h2 className="text-4xl font-bold">Manage Trades</h2>
-                            <p className="text-customBlack">Manage existing trades (edit or delete). Use the filters to narrow results.</p>
-                        </div>
-                    </div>
-                    <Link href="/admin/add-trades" className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2">
+            <div className="max-w-7xl h-[750px] flex flex-col pt-16 mx-4 lg:mx-auto">
+                {/* Header */}
+                <div className="mb-6">
+                  {/* Mobile layout: actions row + centered title */}
+                  <div className="sm:hidden space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Link
+                        href="/admin/console"
+                        className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-9 py-2 leading-none inline-flex items-center gap-1"
+                      >
+                        <ArrowBack fontSize="small" /> Console
+                      </Link>
+                      <Link
+                        href="/admin/add-trades"
+                        className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-9 py-2 leading-none inline-flex items-center gap-1"
+                      >
                         Add Trades
-                    </Link>
+                      </Link>
+                    </div>
+                    <div className="space-y-1 pt-4">
+                      <h2 className="text-2xl font-bold text-center">Manage Trades</h2>
+                      <p className="text-customBlack text-center">
+                        Manage existing trades (edit or delete). Use the filters to narrow results.
+                      </p>
+                    </div>
+                  </div>
+                
+                  {/* Tablet/Desktop layout: three-column header */}
+                  <div className="hidden sm:grid grid-cols-4 items-center">
+                    <div className="justify-self-start">
+                      <Link
+                        href="/admin/console"
+                        className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2 leading-none inline-flex items-center gap-1"
+                      >
+                        <ArrowBack /> Console
+                      </Link>
+                    </div>
+                    <div className="justify-self-center col-span-2">
+                      <div className="space-y-1">
+                        <h2 className="text-3xl md:text-4xl font-bold text-center">Manage Trades</h2>
+                        <p className="text-customBlack text-center">
+                          Manage existing trades (edit or delete). Use the filters to narrow results.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="justify-self-end">
+                      <Link
+                        href="/admin/add-trades"
+                        className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2 leading-none inline-flex items-center gap-1"
+                      >
+                        Add Trades
+                      </Link>
+                    </div>
+                  </div>
                 </div>
                 {/* Table */}
                 <div className="bg-white rounded-xl overflow-auto">

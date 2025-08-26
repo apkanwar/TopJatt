@@ -100,16 +100,48 @@ export default function AdminConsole() {
         <AdminGuard>
             <div className="mx-auto max-w-5xl px-4 mt-24">
                 {/* Header */}
-                <div className="mb-6 flex items-center justify-between">
-                    <Link href={'/'} className="rounded-lg bg-dashWhite px-4 py-2 text-sm font-semibold text-customBlack hover:opacity-90 items-center flex gap-2 leading-none">
-                        <Home /> Home
-                    </Link>
-                    <div className="flex gap-2 flex-col">
-                        <h2 className="text-4xl font-bold">Welcome to the Admin Console</h2>
+                <div className="mb-6">
+                  {/* Mobile layout: actions row + centered title */}
+                  <div className="sm:hidden space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Link
+                        href={'/'}
+                        className="rounded-lg bg-dashWhite px-3 py-2 text-sm font-semibold text-customBlack hover:opacity-90 inline-flex items-center gap-2"
+                      >
+                        <Home fontSize="small" /> Home
+                      </Link>
+                      <button
+                        onClick={() => signOut({ callbackUrl: '/login' })}
+                        className="rounded-lg bg-dashWhite px-3 py-2 text-sm font-semibold text-customBlack hover:opacity-90 inline-flex items-center gap-2"
+                      >
+                        <Logout fontSize="small" /> Logout
+                      </button>
                     </div>
-                    <button onClick={() => signOut({ callbackUrl: '/login' })} className="rounded-lg bg-dashWhite px-4 py-2 text-sm font-semibold text-customBlack hover:opacity-90 items-center flex gap-2">
+                    <h2 className="text-2xl font-bold text-center pt-4">Admin Console</h2>
+                  </div>
+                
+                  {/* Desktop / tablet layout: three-column header */}
+                  <div className="hidden sm:grid grid-cols-4 items-center">
+                    <div className="justify-self-start">
+                      <Link
+                        href={'/'}
+                        className="rounded-lg bg-dashWhite px-4 py-2 text-sm font-semibold text-customBlack hover:opacity-90 inline-flex items-center gap-2"
+                      >
+                        <Home /> Home
+                      </Link>
+                    </div>
+                    <div className="justify-self-center col-span-2">
+                      <h2 className="text-3xl md:text-4xl font-bold text-center">Admin Console</h2>
+                    </div>
+                    <div className="justify-self-end">
+                      <button
+                        onClick={() => signOut({ callbackUrl: '/login' })}
+                        className="rounded-lg bg-dashWhite px-4 py-2 text-sm font-semibold text-customBlack hover:opacity-90 inline-flex items-center gap-2"
+                      >
                         <Logout /> Logout
-                    </button>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Sections */}
@@ -124,10 +156,9 @@ export default function AdminConsole() {
                                             key={item.title}
                                             type="button"
                                             onClick={openPwdModal}
-                                            className={`bg-${item.bgColor} rounded-2xl min-h-[120px] p-8 flex flex-col gap-4 text-left focus:outline-none`}
+                                            className={`bg-${item.bgColor} rounded-2xl md:min-h-[120px] p-8 flex flex-col gap-4 text-left focus:outline-none`}
                                         >
-                                            <h1 className="text-navyBlue font-numbers text-2xl">{item.title}</h1>
-                                            <div className="ml-auto" />
+                                            <h1 className="text-navyBlue font-numbers text-2xl font-bold">{item.title}</h1>
                                         </button>
                                     ) : (
                                         <Dash
@@ -146,7 +177,7 @@ export default function AdminConsole() {
                 {showPwdModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center">
                         <div className="absolute inset-0 bg-black/40" onClick={closePwdModal} />
-                        <div className="relative z-10 w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
+                        <div className="relative z-10 w-full max-w-md rounded-2xl bg-white p-6 shadow-lg mx-4">
                             <h3 className="text-xl font-semibold text-customBlack mb-4">Change Password</h3>
                             {err && <div className="mb-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{err}</div>}
                             {msg && <div className="mb-3 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{msg}</div>}
