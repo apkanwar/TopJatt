@@ -59,7 +59,7 @@ export default function AchievementsList() {
 								) : (
 									<img
 										alt="Achievement Icon"
-										src={'/awards.png'}
+										src={'/trophy.png'}
 										className="h-full w-full object-contain"
 									/>
 								)}

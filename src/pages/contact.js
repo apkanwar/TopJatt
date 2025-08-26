@@ -3,13 +3,13 @@ import { useState } from "react";
 
 export default function Contact() {
     const [result, setResult] = useState("");
-    const accessKey = ""
+    const accessKey = "2dafccc5-f903-422b-b03c-36183ca73b39"
 
     async function handleSubmit(event) {
         event.preventDefault();
         const formData = new FormData(event.target);
 
-        formData.append("access_key", "YOUR_ACCESS_KEY_HERE");
+        formData.append("access_key", accessKey);
 
         const object = Object.fromEntries(formData);
         const json = JSON.stringify(object);
@@ -37,10 +37,10 @@ export default function Contact() {
         <div className="flex flex-col gap-12 max-w-7xl mx-auto my-16">
             {/* Header Bar */}
             <div className='grid grid-cols-4 gap-4 gap-y-16 max-w-7xl mx-4 z-50'>
-                <Dash title="Home" image="" bgColor='dashPurple' imageWidth={100} link='/' />
-                <Dash title="About Me" image="/dash/about.png" bgColor='dashWhite' imageWidth={100} link='/about' />
+                <Dash title="Home" image="/dash/home.png" bgColor='dashPurple' imageWidth={80} link='/' />
+                <Dash title="About Me" image="/dash/about.png" bgColor='dashWhite' imageWidth={80} link='/about' />
                 <Dash title="Trades" image="/dash/trades.png" bgColor='dashYellow' imageWidth={80} link='/trades' />
-                <Dash title="Achievements" image="/dash/achievements.png" bgColor='dashGreen' imageWidth={100} link='/achievements' />
+                <Dash title="Achievements" image="/dash/achievements.png" bgColor='dashGreen' imageWidth={80} link='/achievements' />
             </div>
 
             {/* Contact Section */}
