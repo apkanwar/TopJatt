@@ -57,7 +57,7 @@ export default function TradingViewWidget({ symbol, boughtAt, soldAt, height = 5
     }, [symbol, boughtAt, soldAt, theme]);
 
     return (
-        <div className="bg-dashYellow rounded-xl p-2">
+        <div className="rounded-xl p-2">
             <div id={`tv_${symbol || "chart"}`} ref={containerRef} style={{ width: "100%", height }} />
         </div>
     );
