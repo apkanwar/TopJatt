@@ -12,10 +12,9 @@ export default async function handler(req, res) {
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize || '10', 10)));
     const skip = (page - 1) * pageSize;
 
-    // NEW: unified search
-    const q = (req.query.q || '').trim();           // search name OR symbol
-    const legacyName = (req.query.name || '').trim(); // backward-compat
-    const status = (req.query.status || '').trim(); // '', 'open', 'closed'
+    const q = (req.query.q || '').trim();
+    const legacyName = (req.query.name || '').trim();
+    const status = (req.query.status || '').trim();
 
     const and = [];
     if (q) {
@@ -47,9 +46,13 @@ export default async function handler(req, res) {
     const payload = Array.isArray(req.body) ? req.body : [req.body];
     const docs = [];
     for (const t of payload) {
-      const { symbol, name, buyPrice, sellPrice, shares, boughtAt, soldAt } = t || {};
-      if (!symbol || buyPrice == null || shares == null) {
-        return res.status(400).json({ error: 'symbol, buyPrice, shares are required' });
+      const { symbol, name, buyPrice, sellPrice, shares, leverage, boughtAt, soldAt } = t || {};
+      if (!symbol || buyPrice == null || shares == null || leverage == null) {
+        return res.status(400).json({ error: 'symbol, buyPrice, shares, leverage are required' });
+      }
+      const levNum = Number(leverage);
+      if (!Number.isFinite(levNum) || levNum <= 0) {
+        return res.status(400).json({ error: 'leverage must be a positive number' });
       }
       const hasSoldDate  = !!soldAt;
       const hasSellPrice = sellPrice != null && sellPrice !== '';
@@ -62,6 +65,7 @@ export default async function handler(req, res) {
         buyPrice: Number(buyPrice),
         sellPrice: hasSellPrice ? Number(sellPrice) : null,
         shares: Number(shares),
+        leverage: levNum,
         boughtAt: boughtAt ? new Date(boughtAt) : null,
         soldAt:   hasSoldDate ? new Date(soldAt)   : null,
         createdAt: new Date(),

@@ -6,6 +6,7 @@ import AdminGuard from "@/components/adminGuard";
 
 const moneyPattern = /^\d+(\.\d{1,2})?$/;
 const sharesPattern = /^\d+(\.\d+)?$/;
+const leveragePattern = /^\d+(\.\d+)?$/; // positive number
 
 const fmtDate = (d) => {
     if (!d) return "—";
@@ -18,6 +19,13 @@ const fmtMoney = (v) => {
     const n = typeof v === "number" ? v : Number(v);
     if (!isFinite(n)) return "—";
     return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+const fmtPercent = (v) => {
+    if (v == null || v === "" || !isFinite(Number(v))) return "—";
+    const n = Number(v);
+    const sign = n > 0 ? "+" : n < 0 ? "" : "";
+    return `${sign}${n.toFixed(2)}%`;
 };
 
 
@@ -40,7 +48,7 @@ export default function ManageTrades() {
 
     // inline edit
     const [editingId, setEditingId] = useState(null);
-    const [form, setForm] = useState({ buyPrice: "", sellPrice: "", shares: "", boughtAt: "", soldAt: "" });
+    const [form, setForm] = useState({ buyPrice: "", sellPrice: "", shares: "", boughtAt: "", soldAt: "", leverage: "" });
     const [savingId, setSavingId] = useState(null);
 
     // Selection state for bulk actions
@@ -87,8 +95,13 @@ export default function ManageTrades() {
     useEffect(() => { load(1); }, [status]);
 
     const profitOf = (r) => {
-        if (!r.soldAt || r.sellPrice == null) return null;
-        return (Number(r.sellPrice ?? 0) - Number(r.buyPrice ?? 0)) * Number(r.shares ?? 0);
+        if (!r.soldAt || r.sellPrice == null || r.buyPrice == null) return null;
+        const buy = Number(r.buyPrice ?? 0);
+        const sell = Number(r.sellPrice ?? 0);
+        if (!isFinite(buy) || buy === 0) return null;
+        const lev = Number(r.leverage ?? 1) || 1;
+        const pct = ((sell - buy) / buy) * 100 * lev;
+        return pct;
     };
 
     const sortedRows = useMemo(() => {
@@ -115,18 +128,20 @@ export default function ManageTrades() {
             shares: r.shares ?? "",
             boughtAt: r.boughtAt ? new Date(r.boughtAt).toISOString().slice(0, 10) : "",
             soldAt: r.soldAt ? new Date(r.soldAt).toISOString().slice(0, 10) : "",
+            leverage: r.leverage != null ? String(r.leverage) : "1",
         });
         setError("");
     };
     const cancelEdit = () => {
         setEditingId(null);
-        setForm({ buyPrice: "", sellPrice: "", shares: "", boughtAt: "", soldAt: "" });
+        setForm({ buyPrice: "", sellPrice: "", shares: "", boughtAt: "", soldAt: "", leverage: "" });
     };
     const onEdit = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
     const saveRow = async (id) => {
         if (!moneyPattern.test(String(form.buyPrice))) { setError("Buy must be a number with up to 2 decimals."); return; }
         if (!sharesPattern.test(String(form.shares)) || Number(form.shares) <= 0) { setError("Shares must be a positive number."); return; }
+        if (form.leverage !== "" && !leveragePattern.test(String(form.leverage))) { setError("Leverage must be a positive number."); return; }
         const hasSoldDate = !!form.soldAt;
         const hasSellPrice = form.sellPrice !== "" && form.sellPrice != null;
         if (hasSoldDate !== hasSellPrice) { setError("Provide both Sold date and Sell price, or neither."); return; }
@@ -140,6 +155,7 @@ export default function ManageTrades() {
                 boughtAt: form.boughtAt || null,
                 soldAt: form.soldAt || null,
                 sellPrice: hasSellPrice ? Number(form.sellPrice) : null,
+                leverage: form.leverage === "" ? 1 : Number(form.leverage),
             };
             const res = await fetch(`/api/trades/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
             if (!res.ok) throw new Error("Update failed");
@@ -198,57 +214,57 @@ export default function ManageTrades() {
             <div className="max-w-7xl h-[750px] flex flex-col pt-16 mx-4 lg:mx-auto">
                 {/* Header */}
                 <div className="mb-6">
-                  {/* Mobile layout: actions row + centered title */}
-                  <div className="sm:hidden space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Link
-                        href="/admin/console"
-                        className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-9 py-2 leading-none inline-flex items-center gap-1"
-                      >
-                        <ArrowBack fontSize="small" /> Console
-                      </Link>
-                      <Link
-                        href="/admin/add-trades"
-                        className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-9 py-2 leading-none inline-flex items-center gap-1"
-                      >
-                        Add Trades
-                      </Link>
+                    {/* Mobile layout: actions row + centered title */}
+                    <div className="sm:hidden space-y-3">
+                        <div className="flex items-center justify-between">
+                            <Link
+                                href="/admin/console"
+                                className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-9 py-2 leading-none inline-flex items-center gap-1"
+                            >
+                                <ArrowBack fontSize="small" /> Console
+                            </Link>
+                            <Link
+                                href="/admin/add-trades"
+                                className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-9 py-2 leading-none inline-flex items-center gap-1"
+                            >
+                                Add Trades
+                            </Link>
+                        </div>
+                        <div className="space-y-1 pt-4">
+                            <h2 className="text-2xl font-bold text-center">Manage Trades</h2>
+                            <p className="text-customBlack text-center">
+                                Manage existing trades (edit or delete). Use the filters to narrow results.
+                            </p>
+                        </div>
                     </div>
-                    <div className="space-y-1 pt-4">
-                      <h2 className="text-2xl font-bold text-center">Manage Trades</h2>
-                      <p className="text-customBlack text-center">
-                        Manage existing trades (edit or delete). Use the filters to narrow results.
-                      </p>
+
+                    {/* Tablet/Desktop layout: three-column header */}
+                    <div className="hidden sm:grid grid-cols-4 items-center">
+                        <div className="justify-self-start">
+                            <Link
+                                href="/admin/console"
+                                className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2 leading-none inline-flex items-center gap-1"
+                            >
+                                <ArrowBack /> Console
+                            </Link>
+                        </div>
+                        <div className="justify-self-center col-span-2">
+                            <div className="space-y-1">
+                                <h2 className="text-3xl md:text-4xl font-bold text-center">Manage Trades</h2>
+                                <p className="text-customBlack text-center">
+                                    Manage existing trades (edit or delete). Use the filters to narrow results.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="justify-self-end">
+                            <Link
+                                href="/admin/add-trades"
+                                className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2 leading-none inline-flex items-center gap-1"
+                            >
+                                Add Trades
+                            </Link>
+                        </div>
                     </div>
-                  </div>
-                
-                  {/* Tablet/Desktop layout: three-column header */}
-                  <div className="hidden sm:grid grid-cols-4 items-center">
-                    <div className="justify-self-start">
-                      <Link
-                        href="/admin/console"
-                        className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2 leading-none inline-flex items-center gap-1"
-                      >
-                        <ArrowBack /> Console
-                      </Link>
-                    </div>
-                    <div className="justify-self-center col-span-2">
-                      <div className="space-y-1">
-                        <h2 className="text-3xl md:text-4xl font-bold text-center">Manage Trades</h2>
-                        <p className="text-customBlack text-center">
-                          Manage existing trades (edit or delete). Use the filters to narrow results.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="justify-self-end">
-                      <Link
-                        href="/admin/add-trades"
-                        className="rounded-lg border-2 bg-transparent font-semibold hover:bg-white font-headings px-4 h-fit py-2 leading-none inline-flex items-center gap-1"
-                      >
-                        Add Trades
-                      </Link>
-                    </div>
-                  </div>
                 </div>
                 {/* Table */}
                 <div className="bg-white rounded-xl overflow-auto">
@@ -305,9 +321,10 @@ export default function ManageTrades() {
                                         <th className="p-3 md:p-4 whitespace-nowrap cursor-pointer" onClick={() => toggleSort("shares")}>
                                             Shares <SortIcon active={sortBy === "shares"} />
                                         </th>
+                                        <th className="p-3 md:p-4 whitespace-nowrap">Lev</th>
                                         <th className="p-3 md:p-4 whitespace-nowrap">Status</th>
                                         <th className="p-3 md:p-4 whitespace-nowrap hidden sm:table-cell cursor-pointer" onClick={() => toggleSort("profit")}>
-                                            Profit <SortIcon active={sortBy === "profit"} />
+                                            Profit % <SortIcon active={sortBy === "profit"} />
                                         </th>
                                         <th className="p-3 md:p-4 whitespace-nowrap hidden md:table-cell">Bought</th>
                                         <th className="p-3 md:p-4 whitespace-nowrap hidden lg:table-cell">Sold</th>
@@ -373,16 +390,36 @@ export default function ManageTrades() {
                                                     ) : Number(r.shares ?? 0)}
                                                 </td>
 
+                                                {/* Leverage */}
+                                                <td className="p-3 md:p-4">
+                                                    {isEditing ? (
+                                                        <input
+                                                            name="leverage"
+                                                            value={form.leverage}
+                                                            onChange={onEdit}
+                                                            inputMode="decimal"
+                                                            className="w-20 md:w-24 rounded-md border border-gray-300 px-2 py-1 text-gray-900 focus:outline-none focus:ring-2 focus:ring-top-orange"
+                                                            placeholder="1"
+                                                        />
+                                                    ) : (r.leverage != null ? `${Number(r.leverage)}x` : "1x")}
+                                                </td>
+
                                                 {/* Status */}
                                                 <td className="p-3 md:p-4">
-                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${r.soldAt ? 'bg-green-50 text-green-700 ring-green-200' : 'bg-gray-100 text-gray-700 ring-gray-300'}`}>
+                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${
+                                                        r.soldAt
+                                                          ? (profitOf(r) ?? 0) >= 0
+                                                            ? 'bg-green-50 text-green-700 ring-green-200'
+                                                            : 'bg-rose-50 text-rose-700 ring-rose-200'
+                                                          : 'bg-amber-50 text-amber-700 ring-amber-200'
+                                                    }`}>
                                                         {r.soldAt ? 'Closed' : 'Open'}
                                                     </span>
                                                 </td>
 
-                                                {/* Profit (hidden on xs) */}
-                                                <td className="p-3 md:p-4 font-semibold hidden sm:table-cell">
-                                                    {fmtMoney(profit)}
+                                                {/* Profit % (hidden on xs) */}
+                                                <td className={`p-3 md:p-4 font-semibold hidden sm:table-cell ${profit == null ? "" : profit >= 0 ? "text-green-600" : "text-red-600"}`}>
+                                                    {fmtPercent(profit)}
                                                 </td>
 
                                                 {/* Bought (hidden on small) */}

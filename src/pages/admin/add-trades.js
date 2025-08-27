@@ -5,6 +5,7 @@ import AdminGuard from '@/components/adminGuard';
 
 const moneyPattern = /^\d+(\.\d{1,2})?$/;
 const sharesPattern = /^\d+(\.\d+)?$/;
+const leveragePattern = /^\d+(\.\d+)?$/; // positive number (e.g., 1, 2, 2.5)
 
 export default function AddTrades() {
   const [query, setQuery] = useState('');
@@ -55,7 +56,7 @@ export default function AddTrades() {
 
   const addToCart = (item) => {
     if (cart.find(c => c.symbol === item.symbol)) return;
-    setCart(prev => [...prev, { ...item, buyPrice: '', sellPrice: '', shares: '', boughtAt: '', soldAt: '' }]);
+    setCart(prev => [...prev, { ...item, buyPrice: '', sellPrice: '', shares: '', leverage: '', boughtAt: '', soldAt: '' }]);
   };
   const removeFromCart = (symbol) => setCart(prev => prev.filter(c => c.symbol !== symbol));
   const updateCart = (symbol, field, value) =>
@@ -66,6 +67,7 @@ export default function AddTrades() {
     for (const c of cart) {
       if (!moneyPattern.test(String(c.buyPrice))) { setMessage(`Invalid buy price for ${c.symbol}`); return; }
       if (!sharesPattern.test(String(c.shares)) || Number(c.shares) <= 0) { setMessage(`Invalid shares for ${c.symbol}`); return; }
+      if (!leveragePattern.test(String(c.leverage)) || Number(c.leverage) <= 0) { setMessage(`Invalid leverage for ${c.symbol} (must be a positive number)`); return; }
       const hasSoldDate = !!c.soldAt;
       const hasSellPrice = c.sellPrice !== '' && c.sellPrice != null;
       if (hasSoldDate !== hasSellPrice) { setMessage(`Provide both sold date and sell price for ${c.symbol}, or neither`); return; }
@@ -79,6 +81,7 @@ export default function AddTrades() {
       buyPrice: Number(c.buyPrice),
       sellPrice: c.sellPrice !== '' ? Number(c.sellPrice) : null,
       shares: Number(c.shares),
+      leverage: Number(c.leverage),
       boughtAt: c.boughtAt || null,
       soldAt: c.soldAt || null,
     }));
@@ -90,7 +93,7 @@ export default function AddTrades() {
       });
       if (!res.ok) { setMessage('Save All failed'); return; }
       setCart([]); setQuery(''); setResults([]);
-      setSuccessMessage('✅\nNew Traded Saved!');
+      setSuccessMessage('✅\nNew Trade Saved!');
       setSearchInfo('');
     } catch (e) {
       console.error('save error', e);
@@ -121,7 +124,7 @@ export default function AddTrades() {
             </div>
             <h2 className="text-2xl font-bold text-center pt-4">Add Trades</h2>
           </div>
-        
+
           {/* Tablet/Desktop layout: three-column header */}
           <div className="hidden sm:grid grid-cols-4 items-center">
             <div className="justify-self-start">
@@ -269,6 +272,16 @@ export default function AddTrades() {
                           onChange={(e) => updateCart(c.symbol, 'shares', e.target.value)}
                           inputMode="decimal"
                           pattern={sharesPattern.source}
+                          className="w-full rounded-md border px-3 py-2"
+                        />
+
+                        {/* Leverage */}
+                        <input
+                          placeholder="Leverage"
+                          value={c.leverage}
+                          onChange={(e) => updateCart(c.symbol, 'leverage', e.target.value)}
+                          inputMode="decimal"
+                          pattern={leveragePattern.source}
                           className="w-full rounded-md border px-3 py-2"
                         />
 

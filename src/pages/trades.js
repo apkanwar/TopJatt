@@ -12,6 +12,7 @@ function serializeTrade(doc) {
     shares: doc.shares == null ? null : Number(doc.shares),
     boughtAt: doc.boughtAt ? new Date(doc.boughtAt).toISOString() : null,
     soldAt: doc.soldAt ? new Date(doc.soldAt).toISOString() : null,
+    leverage: doc.leverage == null ? 1 : Number(doc.leverage),
   };
 }
 

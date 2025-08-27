@@ -18,9 +18,13 @@ export default async function handler(req, res) {
   const _id = new ObjectId(id);
 
   if (req.method === 'PUT') {
-    const { buyPrice, sellPrice, shares, boughtAt, soldAt } = req.body || {};
-    if (buyPrice == null || shares == null) {
-      return res.status(400).json({ error: 'buyPrice and shares are required' });
+    const { buyPrice, sellPrice, shares, leverage, boughtAt, soldAt } = req.body || {};
+    if (buyPrice == null || shares == null || leverage == null) {
+      return res.status(400).json({ error: 'buyPrice, shares, and leverage are required' });
+    }
+    const levNum = Number(leverage);
+    if (!Number.isFinite(levNum) || levNum <= 0) {
+      return res.status(400).json({ error: 'leverage must be a positive number' });
     }
 
     const existing = await collection.findOne({ _id });
@@ -36,6 +40,7 @@ export default async function handler(req, res) {
     const update = {
       buyPrice: Number(buyPrice),
       shares: Number(shares),
+      leverage: levNum,
       boughtAt: boughtAt ? new Date(boughtAt) : null,
       lastModified: new Date(),
     };

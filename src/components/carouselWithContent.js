@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 
 const AdvancedChart = dynamic(
     () => import("react-tradingview-embed").then((m) => m.AdvancedChart),
@@ -42,6 +43,24 @@ function fmtNumber(v) {
     return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(Number(v));
 }
 
+// Format a percent like +12.34%
+function fmtPercent(v) {
+    if (v == null || isNaN(Number(v))) return "—";
+    const n = Number(v);
+    const sign = n > 0 ? "+" : "";
+    return `${sign}${n.toFixed(2)}%`;
+}
+
+// Compute profit percent ((sell - buy) / buy) * 100 * leverage
+function computeProfitPercent(buyPrice, sellPrice, leverage = 1) {
+    if (sellPrice == null || !Number.isFinite(Number(sellPrice))) return null;
+    const buy = Number(buyPrice ?? 0);
+    const sell = Number(sellPrice ?? 0);
+    const lev = Number(leverage ?? 1) || 1;
+    if (!isFinite(buy) || buy === 0) return null;
+    return ((sell - buy) / buy) * 100 * lev;
+}
+
 export default function CarouselWithSideContent({ data = [] }) {
     const [activeIndex, setActiveIndex] = useState(0);
     const [viewport, setViewport] = useState("desktop"); // "mobile" | "tablet" | "desktop"
@@ -68,6 +87,7 @@ export default function CarouselWithSideContent({ data = [] }) {
             shares: t?.shares,
             boughtAt: t?.boughtAt,
             soldAt: t?.soldAt,
+            leverage: t?.leverage
         }));
     }, [data]);
 
@@ -113,6 +133,8 @@ export default function CarouselWithSideContent({ data = [] }) {
                     const profit = computeProfit(slide.buyPrice, slide.sellPrice, slide.shares);
                     const isClosed = slide.soldAt && slide.sellPrice != null;
                     const title = slide.name
+                    const profitPct = computeProfitPercent(slide.buyPrice, slide.sellPrice, slide.leverage);
+                    const percentLabel = profitPct == null ? "—" : fmtPercent(profitPct);
 
                     return (
                         <div key={`${slide.symbol || 'img'}-${idx}`} className="flex flex-col lg:flex-row items-stretch bg-customBlack rounded-3xl shadow-lg overflow-hidden min-h-[520px] h-auto p-4 md:p-16 md:pb-24 border-white border-8 gap-8">
@@ -189,9 +211,15 @@ export default function CarouselWithSideContent({ data = [] }) {
 
                                     {/* Shares banner */}
                                     <div className="rounded-xl p-4 ring-1 ring-white/10 bg-white/5">
-                                        <div>
-                                            <div className="text-sm uppercase tracking-wide text-dashWhite font-semibold">Shares</div>
-                                            <div className="text-base md:text-lg font-medium">{fmtNumber(slide.shares)}</div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <div className="text-sm uppercase tracking-wide text-dashWhite font-semibold">Shares</div>
+                                                <div className="text-base md:text-lg font-medium">{fmtNumber(slide.shares)}</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-sm uppercase tracking-wide text-dashWhite font-semibold">Leverage</div>
+                                                <div className="text-base md:text-lg font-medium">{fmtNumber(slide.leverage)}x</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -207,7 +235,7 @@ export default function CarouselWithSideContent({ data = [] }) {
                                     const profitLabel = profit == null ? "—" : fmtCurrency(profit);
                                     return (
                                         <div className={`mt-6 rounded-xl p-4 ring-1 ${profitClass}`}>
-                                            <div className="text-[11px] uppercase tracking-wide opacity-80">Profit</div>
+                                            <div className="text-sm uppercase tracking-wide opacity-80">Profit</div>
                                             <div className="mt-1 flex items-center gap-2">
                                                 {isClosed && profit != null && (
                                                     profit >= 0 ? (
@@ -216,16 +244,11 @@ export default function CarouselWithSideContent({ data = [] }) {
                                                         <TrendingDownIcon className="!text-red-600" fontSize="small" />
                                                     )
                                                 )}
-                                                <div className="text-2xl font-semibold">{profitLabel}</div>
+                                                <div className="text-2xl font-semibold">{profitLabel} ({percentLabel}) </div>
                                             </div>
                                         </div>
                                     );
                                 })()}
-
-                                {/* Optional description */}
-                                {slide.description && (
-                                    <p className="mt-6 text-gray-300 leading-relaxed">{slide.description}</p>
-                                )}
                             </div>
                         </div>
                     );
