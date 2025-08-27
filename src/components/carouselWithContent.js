@@ -5,7 +5,10 @@ import dynamic from "next/dynamic";
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 
-const TradingViewWidget = dynamic(() => import("./TradingViewWidget"), { ssr: false });
+const AdvancedChart = dynamic(
+    () => import("react-tradingview-embed").then((m) => m.AdvancedChart),
+    { ssr: false }
+);
 
 function fmtDate(d) {
     if (!d) return "—";
@@ -39,13 +42,7 @@ function fmtNumber(v) {
     return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(Number(v));
 }
 
-/**
- * CarouselWithSideContent
- * Expects `data` items with fields like:
- * { image?, symbol, name, buyPrice, sellPrice?, shares, boughtAt?, soldAt?, description? }
- * If `image` is missing, we use the existing placeholder image.
- */
-export default function CarouselWithSideContent({ data = slides }) {
+export default function CarouselWithSideContent({ data = [] }) {
     const [activeIndex, setActiveIndex] = useState(0);
     const [viewport, setViewport] = useState("desktop"); // "mobile" | "tablet" | "desktop"
 
@@ -87,9 +84,8 @@ export default function CarouselWithSideContent({ data = slides }) {
                             <button
                                 key={i}
                                 onClick={() => setActiveIndex(i)}
-                                className={`px-3 py-1 rounded-full font-semibold transition-colors ${activeIndex === i ? 'bg-top-orange text-white' : 'bg-gray-200 text-gray-700 hover:bg-top-orange hover:text-white'}`}
+                                className={`px-2.5 py-1 rounded-full font-semibold transition-colors ${activeIndex === i ? 'bg-top-orange text-white' : 'bg-gray-200 text-gray-700 hover:bg-top-orange hover:text-white'}`}
                             >
-                                {i + 1}
                             </button>
                         ))}
                     </div>
@@ -119,27 +115,26 @@ export default function CarouselWithSideContent({ data = slides }) {
                     const title = slide.name
 
                     return (
-                        <div key={idx} className="flex flex-col lg:flex-row items-stretch bg-customBlack rounded-3xl shadow-lg overflow-hidden min-h-[520px] h-auto p-4 md:p-16 md:pb-24 border-white border-8 gap-8">
+                        <div key={`${slide.symbol || 'img'}-${idx}`} className="flex flex-col lg:flex-row items-stretch bg-customBlack rounded-3xl shadow-lg overflow-hidden min-h-[520px] h-auto p-4 md:p-16 md:pb-24 border-white border-8 gap-8">
                             {/* LEFT: image (keep placeholder if no stock graph available) */}
-                            <div className={`w-full lg:w-1/2 flex-shrink-0 relative h-64 md:h-80 lg:h-full rounded-xl ${!isClosed
-                                ? "bg-amber-400"
-                                : (profit ?? 0) >= 0
-                                    ? "bg-green-400"
-                                    : "bg-red-400"
-                                }`}>
+                            <div className={`w-full lg:w-1/2 flex-shrink-0 relative !h-64 md:!h-80 lg:!h-[500px] rounded-xl`}>
                                 {slide.symbol ? (
-                                    <TradingViewWidget
-                                        symbol={slide.symbol}
-                                        boughtAt={slide.boughtAt}
-                                        soldAt={slide.soldAt}
-                                        height={
-                                            viewport === "mobile"
-                                                ? 256
-                                                : viewport === "tablet"
-                                                    ? 320
-                                                    : 500
-                                        }
-                                        theme="light"
+                                    <AdvancedChart
+                                        key={`${slide.symbol || "img"}-${idx}`}
+                                        widgetProps={{
+                                            symbol: slide.symbol,
+                                            theme: "light",
+                                            interval: "D",
+                                            autosize: true,
+                                            allow_symbol_change: false,
+                                            hide_side_toolbar: true,
+                                            withdateranges: true,
+                                            timezone: "Etc/UTC",
+                                            locale: "en",
+                                            style: "1",
+                                            height: '100%',
+                                            container_id: `tv_${(slide.symbol || 'img').replace(/[^a-zA-Z0-9_]/g, '')}_${idx}`,
+                                        }}
                                     />
                                 ) : (
                                     <Image src={slide.image} alt={title || `Trade ${idx + 1}`} className="rounded-xl object-cover" fill priority />
@@ -147,7 +142,7 @@ export default function CarouselWithSideContent({ data = slides }) {
                             </div>
 
                             {/* RIGHT: trade details (modern design) */}
-                            <div className="w-full lg:w-1/2 p-4 lg:p-6 h-full text-white mb-16 md:mb-4">
+                            <div className="w-full lg:w-1/2 p-4 lg:p-6 h-full text-white mb-16 md:mb-4 pt-0">
                                 {/* Header: title + status pill */}
                                 <div className="flex items-start justify-between gap-3 mb-8">
                                     <h2 className="text-2xl md:text-3xl font-bold leading-tight min-h-[60px]">{title}</h2>
@@ -205,7 +200,7 @@ export default function CarouselWithSideContent({ data = slides }) {
                                 {(() => {
                                     const profitClass =
                                         profit == null
-                                            ? "text-amber-300 ring-amber-500/20 bg-amber/5"
+                                            ? "text-amber-300 ring-amber-500/20 bg-amber-500/5"
                                             : profit >= 0
                                                 ? "text-green-300 ring-green-500/30 bg-green-500/10"
                                                 : "text-red-300 ring-red-500/30 bg-red-500/10";
