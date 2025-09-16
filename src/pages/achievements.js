@@ -7,7 +7,7 @@ export default function Achievements({ items = [] }) {
   return (
     <div className="flex flex-col gap-12 max-w-7xl mx-auto my-16">
       {/* Header Bar */}
-      <div className='grid grid-cols-1 gap-y-4 max-w-7xl mx-4 md:grid-cols-2 md:gap-4 lg:grid-cols-4 lg:gap-4 lg:gap-y-16 lg:mx-8'>
+      <div className='grid grid-cols-1 gap-y-4 max-w-7xl mx-4 md:grid-cols-2 md:gap-4 lg:grid-cols-4 lg:gap-8 lg:gap-y-16 lg:mx-8'>
         <Dash title="Home" image="/dash/home.png" bgColor="dashGreen" imageWidth={80} link="/" />
         <Dash title="About Me" image="/dash/about.png" bgColor="dashWhite" imageWidth={80} link="/about" />
         <Dash title="Trades" image="/dash/trades.png" bgColor="dashYellow" imageWidth={80} link="/trades" />
