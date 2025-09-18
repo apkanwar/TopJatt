@@ -93,7 +93,7 @@ export default function Contact() {
                       {/* Left: Image (matches form height on desktop via flex items-stretch) */}
                       <div className="relative w-full h-64 rounded-3xl overflow-hidden shadow-sm ring-1 ring-gray-200 lg:h-auto lg:w-2/5">
                         <Image
-                          src="/topjatt.jpeg"
+                          src="/topjatt/contact.png"
                           alt="Get in touch"
                           fill
                           priority

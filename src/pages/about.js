@@ -72,7 +72,7 @@ export default function About() {
                     </div>
                     <div className="grid lg:grid-cols-3 gap-4 max-w-6xl mx-auto grid-col-1">
                         <div className="flex items-start justify-center">
-                            <Image src="/topjatt.jpeg" alt="Profile Picture" className="rounded-full" width={300} height={300} />
+                            <Image src="/topjatt/about.png" alt="Profile Picture" className="rounded-[50px]" width={300} height={300} />
                         </div>
                         <div className="flex flex-col gap-4 lg:col-span-2 items-center text-center lg:text-start lg:items-start mx-8 text-white text-lg font-main">
                               {renderContent(aboutContent)}
