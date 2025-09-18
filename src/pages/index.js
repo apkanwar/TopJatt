@@ -40,8 +40,8 @@ export default function Home() {
         </div>
 
         {/* Main Image */}
-        <div className={`${styles.container}`}>
-          <Image src="/topjatt.jpeg" alt="About Picture" className={`${styles.profilePicture}`} width={500} height={500} priority />
+        <div className="mx-auto rounded-full overflow-hidden shadow-lg border-white border-4" style={{ width: 350, height: 350 }}>
+          <Image src="/topjatt/home.png" alt="Home Picture" width={350} height={350} priority />
         </div>
 
         <Footer pos='relative' />
@@ -52,7 +52,7 @@ export default function Home() {
         <div className="flex-1 flex items-center justify-center pt-24">
           <div className="relative" style={{ width: circleDiameter, height: circleDiameter }}>
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full overflow-hidden shadow-lg border-white border-4" style={{ width: 350, height: 350 }}>
-              <Image src="/topjatt/01.png" alt="Home Picture" width={350} height={350} priority />
+              <Image src="/topjatt/home.png" alt="Home Picture" width={350} height={350} priority />
             </div>
 
             {/* Optional: show the circle perimeter for reference */}
