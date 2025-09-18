@@ -91,7 +91,7 @@ export default function Contact() {
                     </div>
                     <div className="mx-auto mt-8 max-w-6xl sm:mt-12 lg:flex lg:flex-row lg:gap-12 lg:items-stretch">
                       {/* Left: Image (matches form height on desktop via flex items-stretch) */}
-                      <div className="relative w-full h-64 rounded-3xl overflow-hidden shadow-sm ring-1 ring-gray-200 lg:h-auto lg:w-2/5">
+                      <div className="relative w-full h-72 rounded-3xl overflow-hidden shadow-sm ring-1 ring-gray-200 lg:h-auto lg:w-2/5">
                         <Image
                           src="/topjatt/contact.png"
                           alt="Get in touch"
